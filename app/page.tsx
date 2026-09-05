@@ -6,16 +6,18 @@ import WeekTab from '@/components/WeekTab';
 import ProgressTab from '@/components/ProgressTab';
 import EventsTab from '@/components/EventsTab';
 import ArticlesTab from '@/components/ArticlesTab';
+import MiMundoTab from '@/components/MiMundoTab';
 import ThemeToggle from '@/components/ThemeToggle';
 
 const EMPTY: AppState = { weeks: {}, events: [] };
-type Tab = 'week' | 'progress' | 'events' | 'articles';
+type Tab = 'week' | 'progress' | 'events' | 'articles' | 'mundo';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'week',     label: '📅 Semana' },
   { key: 'progress', label: '📈 Progreso' },
   { key: 'events',   label: '🎈 Eventos' },
   { key: 'articles', label: '📚 Para ti' },
+  { key: 'mundo',    label: '💜 Mi mundo' },
 ];
 
 export default function Home() {
@@ -112,22 +114,23 @@ export default function Home() {
           <ThemeToggle />
         </header>
 
-        {/* Tab bar */}
+        {/* Tab bar — scrollable */}
         <div style={{
-          display: 'flex', gap: 4,
-          background: 'var(--bg-card)', borderRadius: 14, padding: 4,
-          marginBottom: 20, border: '1.5px solid var(--line)',
+          display: 'flex', gap: 6, overflowX: 'auto',
+          padding: '0 0 8px', marginBottom: 16,
+          scrollbarWidth: 'none',
         }}>
           {TABS.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               style={{
-                flex: 1, padding: '10px 4px', borderRadius: 10, border: 'none',
-                background: tab === t.key ? 'var(--pink)' : 'transparent',
+                flexShrink: 0, padding: '9px 14px', borderRadius: 20,
+                background: tab === t.key ? 'var(--pink)' : 'var(--bg-card)',
                 color: tab === t.key ? '#fff' : 'var(--ink-soft)',
-                fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 11.5,
-                cursor: 'pointer', transition: 'all 0.15s',
+                border: tab === t.key ? '1.5px solid var(--pink)' : '1.5px solid var(--line)',
+                fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13,
+                cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap',
               }}
             >
               {t.label}
@@ -140,6 +143,7 @@ export default function Home() {
         {tab === 'progress' && <ProgressTab state={appState} />}
         {tab === 'events'   && <EventsTab   state={appState} onChange={handleChange} />}
         {tab === 'articles' && <ArticlesTab />}
+        {tab === 'mundo'    && <MiMundoTab state={appState} onChange={handleChange} />}
       </div>
     </>
   );
