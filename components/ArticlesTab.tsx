@@ -35,6 +35,65 @@ const ARTICLES: Article[] = [
     ),
   },
   {
+    id: 'sueno',
+    emoji: '😴',
+    title: 'Por qué dormir bien es una de las mejores cosas que puedes hacer por ti',
+    color: 'var(--lilac)',
+    colorSoft: 'var(--lilac-soft)',
+    content: (
+      <>
+        <p>Dormir no es "perder el tiempo". Es, literalmente, el momento en que tu cuerpo y tu cerebro se reparan, crecen y se preparan para el día siguiente. Y a los 14 años, esto importa más que en casi cualquier otra etapa de tu vida.</p>
+
+        <h4>🔬 ¿Qué pasa mientras duermes?</h4>
+        <p>El sueño no es un estado uniforme. Tu cuerpo pasa por ciclos de aproximadamente 90 minutos, y en cada uno ocurren cosas distintas. En las fases más profundas, el cerebro consolida lo que aprendiste durante el día — es decir, estudiar y luego dormir bien hace que recuerdes más que estudiar y quedarte despierta. En la fase REM (la del sueño con imágenes), el cerebro procesa emociones, resuelve problemas y refuerza la creatividad.</p>
+
+        <h4>🌱 La hormona que te hace crecer — en serio</h4>
+        <p>Durante el sueño profundo, tu cuerpo libera la <em>hormona del crecimiento</em>. Esta hormona no solo hace que crezcas en estatura: también repara músculos, fortalece huesos, regula el metabolismo y mantiene tu piel sana. El 70% de la hormona del crecimiento del día se libera mientras duermes. Si te acuestas tarde, ese proceso se interrumpe.</p>
+
+        <h4>🧠 Lo que el mal sueño le hace a tu cerebro</h4>
+        <p>Dormir poco afecta la memoria, la concentración y el estado de ánimo. Una noche mal dormida puede hacer que te cueste el doble entender algo en clase, que te irrites más fácil y que sientas más ansiedad. Con el tiempo, el sueño insuficiente se asocia con peor rendimiento escolar, menos energía y mayor riesgo de depresión.</p>
+
+        <h4>⏰ ¿Cuánto necesitas a tu edad?</h4>
+        <p>La ciencia es clara: los adolescentes necesitan entre <em>8 y 10 horas</em> por noche. No es un capricho — es lo que tu cuerpo en desarrollo requiere para funcionar bien. Acostarte a las 10 pm y levantarte a las 6 am te da exactamente 8 horas. Cada hora que le robas a tu sueño viendo el celular, la pagas al día siguiente con tu energía, tu concentración y tu humor.</p>
+
+        <p style={{ fontWeight: 700, marginTop: 8, borderTop: '1.5px solid var(--line)', paddingTop: 12 }}>
+          💜 La enseñanza: dormir bien no es flojera — es inteligencia. Cada vez que respetas tu hora de dormir, le estás regalando a la Carlita de mañana más energía, mejor memoria y un cuerpo que crece sano. El celular puede esperar. Tu sueño no.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'equilibrio',
+    emoji: '⚖️',
+    title: 'El arte de repartir tu tiempo: estudios, baile, amigos, familia y tú',
+    color: 'var(--pink)',
+    colorSoft: 'var(--pink-soft)',
+    content: (
+      <>
+        <p>Tienes mucho en tus manos: el cole, los estudios, el baile, tus amigas, ayudar en casa, y además ser hija, hermana, sobrina y nieta. A veces puede sentirse como demasiado. La clave no es hacer todo perfecto — es aprender a repartir tu tiempo con intención.</p>
+
+        <h4>📚 Los estudios: tu base</h4>
+        <p>El colegio no es lo más divertido del mundo, pero lo que aprendes ahora abre o cierra puertas más adelante. No necesitas ser la número uno de tu clase, pero sí necesitas cumplir: ir preparada a los exámenes, entregar tus trabajos y mantener el ritmo. Cuando estudias con constancia, te queda tiempo libre de verdad — sin culpa y sin estrés de último momento.</p>
+
+        <h4>💃 El baile: más que un pasatiempo</h4>
+        <p>El baile no es un extra — es parte de quién eres. Te da disciplina, expresión, conexión con tu cuerpo y una forma de procesar emociones que las palabras a veces no alcanzan. Cuidar ese espacio es cuidarte a ti misma. Cuando ensayas con compromiso, también estás aprendiendo a ser constante y a trabajar por algo que amas.</p>
+
+        <h4>👯 Las amigas: necesarias, no un lujo</h4>
+        <p>El tiempo con tus amigas no es tiempo perdido. Las amistades en la adolescencia te enseñan a confiar, a resolver conflictos, a escuchar y a ser escuchada. Lo que sí importa es que ese tiempo no se coma lo que tienes que hacer. Un plan con amigas cuando ya cumpliste tus responsabilidades sabe completamente distinto a uno cuando sabes que tienes algo pendiente.</p>
+
+        <h4>🏠 La familia: tu red más cercana</h4>
+        <p>Ser hija, hermana, nieta, sobrina — cada rol tiene algo que darte y algo que pedirte. Ayudar en casa no es un castigo: es aprender a vivir con otros, a ser responsable de un espacio compartido y a mostrar que valoras lo que tus papás construyen todos los días para que tú puedas tener lo que tienes. Una llamada a tu abuela, un momento con tus tíos, estar presente en familia — esas cosas las vas a recordar mucho más que cualquier serie que hayas visto.</p>
+
+        <h4>🌸 Y tú: no te olvides de ti misma</h4>
+        <p>En medio de todo lo anterior, necesitas tiempo para ti. Para no hacer nada. Para pensar. Para escuchar música sin distracciones. Para descansar. Una persona que solo da y nunca recarga, se agota. Respetar tu descanso también es una responsabilidad.</p>
+
+        <p style={{ fontWeight: 700, marginTop: 8, borderTop: '1.5px solid var(--line)', paddingTop: 12 }}>
+          💜 La enseñanza: no se trata de hacerlo todo al mismo tiempo ni de ser perfecta en cada rol. Se trata de estar presente en cada cosa cuando le toca. Cuando estudias, estudia. Cuando bailas, baila. Cuando estás con tu familia, estás con tu familia. Esa presencia es lo que convierte el tiempo en algo que vale la pena.
+        </p>
+      </>
+    ),
+  },
+  {
     id: 'estudio',
     emoji: '📖',
     title: 'Por qué estudiar poco a poco te hace ganar en los exámenes',
