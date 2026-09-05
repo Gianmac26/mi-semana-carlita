@@ -51,6 +51,11 @@ export default function WeekTab({ state, onChange }: Props) {
 
   const toggleTask = (id: string) => updateDay({ [id]: !dayState[id] });
 
+  const toggleSkip = (id: string) => {
+    const prev = (dayState.skipped ?? {}) as Record<string, boolean>;
+    updateDay({ skipped: { ...prev, [id]: !prev[id] } });
+  };
+
   const handleNotes = (val: string) => {
     updateDay({ notes: val });
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -96,14 +101,19 @@ export default function WeekTab({ state, onChange }: Props) {
                 {pct}% cumplido
               </span>
             </div>
-            {tasks.map(task => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                checked={!!dayState[task.id]}
-                onToggle={() => toggleTask(task.id)}
-              />
-            ))}
+            {tasks.map(task => {
+              const skipped = !!((dayState.skipped as Record<string,boolean> | undefined)?.[task.id]);
+              return (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  checked={!!dayState[task.id]}
+                  skipped={skipped}
+                  onToggle={() => toggleTask(task.id)}
+                  onSkip={() => toggleSkip(task.id)}
+                />
+              );
+            })}
           </div>
         )}
 

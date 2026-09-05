@@ -20,8 +20,9 @@
   --font-body: 'Nunito', sans-serif;
 }
 
+/* Dark via system preference (only when no explicit override) */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
     --bg: #1C1626;
     --bg-card: #251C33;
     --ink: #F5EFFF;
@@ -38,6 +39,25 @@
     --ok: #57D999;
     --ok-soft: #1B3327;
   }
+}
+
+/* Dark via explicit toggle */
+:root[data-theme="dark"] {
+  --bg: #1C1626;
+  --bg-card: #251C33;
+  --ink: #F5EFFF;
+  --ink-soft: #C9BBDD;
+  --pink: #FF7FA3;
+  --pink-soft: #3A2233;
+  --teal: #3DD9C7;
+  --teal-soft: #1B3733;
+  --yellow: #FFD874;
+  --yellow-soft: #3A3120;
+  --lilac: #C39BFF;
+  --lilac-soft: #382A4D;
+  --line: #3A2E4D;
+  --ok: #57D999;
+  --ok-soft: #1B3327;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

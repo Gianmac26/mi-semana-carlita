@@ -3,6 +3,7 @@ export interface Task {
   icon: string;
   label: string;
   time: string;
+  skippable?: boolean; // can be marked "Me quedé en casa"
 }
 
 export const WEEKDAY_TASKS: Task[] = [
@@ -11,13 +12,13 @@ export const WEEKDAY_TASKS: Task[] = [
   { id: 'almuerzo',     icon: '🍽️', label: 'Cambio de ropa + almuerzo', time: '2:30–3:00 pm' },
   { id: 'ducha',        icon: '🚿', label: 'Ducha y lista para estudiar', time: '3:30 pm' },
   { id: 'estudio',      icon: '📖', label: 'Estudio sin celular', time: '4:00–5:30 pm' },
-  { id: 'regreso',      icon: '🌟', label: 'Regreso de salir con amigas', time: '7:30 pm' },
+  { id: 'regreso',      icon: '🌟', label: 'Regreso de salir con amigas', time: '7:30 pm', skippable: true },
   { id: 'dormir',       icon: '🌙', label: 'Celular fuera de la cama y a dormir', time: '10:00 pm' },
 ];
 
 export const SATURDAY_TASKS: Task[] = [
   { id: 'cuadernos',   icon: '📓', label: 'Revisión de cuadernos con mamá', time: '' },
-  { id: 'regreso_sab', icon: '🌆', label: 'Regreso de salir con amigas', time: '8:00 pm' },
+  { id: 'regreso_sab', icon: '🌆', label: 'Regreso de salir con amigas', time: '8:00 pm', skippable: true },
 ];
 
 export const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
@@ -39,6 +40,9 @@ export function getDayCompletion(
 ): number {
   const tasks = getTasksForDay(day);
   if (!tasks.length || !dayState) return 0;
-  const done = tasks.filter(t => dayState[t.id] === true).length;
-  return Math.round((done / tasks.length) * 100);
+  const skipped = (dayState.skipped ?? {}) as Record<string, boolean>;
+  const active = tasks.filter(t => !skipped[t.id]);
+  if (!active.length) return 100;
+  const done = active.filter(t => dayState[t.id] === true).length;
+  return Math.round((done / active.length) * 100);
 }

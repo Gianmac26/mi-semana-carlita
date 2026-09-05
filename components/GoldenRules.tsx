@@ -2,6 +2,8 @@ const RULES = [
   { icon: '📵', text: 'Sin celular en horario de estudio — solo música' },
   { icon: '🛏️', text: 'El celular duerme en el escritorio, no en la cama' },
   { icon: '⏰', text: 'Hora tope para dormir: 10:00 pm, lunes a viernes' },
+  { icon: '🍽️', text: 'Lavar los servicios inmediatamente después de usarlos' },
+  { icon: '🏡', text: 'Cada vez que pueda, ayudar con la limpieza de casa' },
 ];
 
 export default function GoldenRules() {

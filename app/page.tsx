@@ -5,14 +5,17 @@ import StatusIndicator from '@/components/StatusIndicator';
 import WeekTab from '@/components/WeekTab';
 import ProgressTab from '@/components/ProgressTab';
 import EventsTab from '@/components/EventsTab';
+import ArticlesTab from '@/components/ArticlesTab';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const EMPTY: AppState = { weeks: {}, events: [] };
-type Tab = 'week' | 'progress' | 'events';
+type Tab = 'week' | 'progress' | 'events' | 'articles';
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'week',     label: '📅 Semana' },
   { key: 'progress', label: '📈 Progreso' },
   { key: 'events',   label: '🎈 Eventos' },
+  { key: 'articles', label: '📚 Para ti' },
 ];
 
 export default function Home() {
@@ -88,19 +91,25 @@ export default function Home() {
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px' }}>
         {/* Header */}
-        <header style={{ textAlign: 'center', padding: '28px 0 20px' }}>
-          <h1 style={{
-            fontFamily: 'var(--font-title)', fontWeight: 700,
-            fontSize: 34, color: 'var(--pink)', letterSpacing: 1,
-          }}>
-            MI SEMANA
-          </h1>
-          <p style={{
-            fontFamily: 'var(--font-body)', color: 'var(--ink-soft)',
-            fontSize: 15, marginTop: 4,
-          }}>
-            Tus responsabilidades de la semana ✨
-          </p>
+        <header style={{
+          display: 'flex', alignItems: 'center',
+          padding: '20px 0 16px', gap: 12,
+        }}>
+          <div style={{ flex: 1 }}>
+            <h1 style={{
+              fontFamily: 'var(--font-title)', fontWeight: 700,
+              fontSize: 30, color: 'var(--pink)', letterSpacing: 1,
+            }}>
+              MI SEMANA
+            </h1>
+            <p style={{
+              fontFamily: 'var(--font-body)', color: 'var(--ink-soft)',
+              fontSize: 14, marginTop: 2,
+            }}>
+              Tus responsabilidades ✨
+            </p>
+          </div>
+          <ThemeToggle />
         </header>
 
         {/* Tab bar */}
@@ -117,7 +126,7 @@ export default function Home() {
                 flex: 1, padding: '10px 4px', borderRadius: 10, border: 'none',
                 background: tab === t.key ? 'var(--pink)' : 'transparent',
                 color: tab === t.key ? '#fff' : 'var(--ink-soft)',
-                fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13,
+                fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 11.5,
                 cursor: 'pointer', transition: 'all 0.15s',
               }}
             >
@@ -130,6 +139,7 @@ export default function Home() {
         {tab === 'week'     && <WeekTab     state={appState} onChange={handleChange} />}
         {tab === 'progress' && <ProgressTab state={appState} />}
         {tab === 'events'   && <EventsTab   state={appState} onChange={handleChange} />}
+        {tab === 'articles' && <ArticlesTab />}
       </div>
     </>
   );

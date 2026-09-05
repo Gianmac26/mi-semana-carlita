@@ -6,7 +6,8 @@ export interface EnsayoState {
 export interface DayState {
   notes?: string;
   ensayo?: EnsayoState;
-  [taskId: string]: boolean | string | EnsayoState | undefined;
+  skipped?: Record<string, boolean>;
+  [taskId: string]: boolean | string | EnsayoState | Record<string, boolean> | undefined;
 }
 
 export interface WeekData {
