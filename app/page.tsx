@@ -1,69 +1,136 @@
-import Image from "next/image";
+'use client';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { AppState, SaveStatus } from '@/lib/types';
+import StatusIndicator from '@/components/StatusIndicator';
+import WeekTab from '@/components/WeekTab';
+import ProgressTab from '@/components/ProgressTab';
+import EventsTab from '@/components/EventsTab';
+
+const EMPTY: AppState = { weeks: {}, events: [] };
+type Tab = 'week' | 'progress' | 'events';
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'week',     label: '📅 Semana' },
+  { key: 'progress', label: '📈 Progreso' },
+  { key: 'events',   label: '🎈 Eventos' },
+];
 
 export default function Home() {
+  const [appState,    setAppState]    = useState<AppState>(EMPTY);
+  const [saveStatus,  setSaveStatus]  = useState<SaveStatus>('idle');
+  const [tab,         setTab]         = useState<Tab>('week');
+  const [loaded,      setLoaded]      = useState(false);
+
+  const saveTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Initial load
+  useEffect(() => {
+    fetch('/api/state')
+      .then(r => r.json())
+      .then((data: AppState) => { setAppState(data ?? EMPTY); setLoaded(true); })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  // Polling every 20s
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetch('/api/state')
+        .then(r => r.json())
+        .then((data: AppState) => { if (data) setAppState(data); })
+        .catch(() => {});
+    }, 20_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const save = useCallback(async (s: AppState) => {
+    setSaveStatus('saving');
+    try {
+      const res = await fetch('/api/state', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(s),
+      });
+      if (!res.ok) throw new Error('fail');
+      setSaveStatus('saved');
+    } catch {
+      setSaveStatus('error');
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+      retryTimer.current = setTimeout(() => save(s), 2_000);
+    }
+  }, []);
+
+  const handleChange = useCallback((newState: AppState) => {
+    setAppState(newState);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => save(newState), 800);
+  }, [save]);
+
+  if (!loaded) {
+    return (
+      <div style={{
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        minHeight: '100vh', flexDirection: 'column', gap: 12,
+      }}>
+        <span style={{ fontSize: 32 }}>✨</span>
+        <span style={{
+          fontFamily: 'var(--font-title)', color: 'var(--pink)', fontSize: 18,
+        }}>
+          Cargando tu semana...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <>
+      <StatusIndicator status={saveStatus} />
+
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px' }}>
+        {/* Header */}
+        <header style={{ textAlign: 'center', padding: '28px 0 20px' }}>
+          <h1 style={{
+            fontFamily: 'var(--font-title)', fontWeight: 700,
+            fontSize: 34, color: 'var(--pink)', letterSpacing: 1,
+          }}>
+            MI SEMANA
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p style={{
+            fontFamily: 'var(--font-body)', color: 'var(--ink-soft)',
+            fontSize: 15, marginTop: 4,
+          }}>
+            Tus responsabilidades de la semana ✨
           </p>
+        </header>
+
+        {/* Tab bar */}
+        <div style={{
+          display: 'flex', gap: 4,
+          background: 'var(--bg-card)', borderRadius: 14, padding: 4,
+          marginBottom: 20, border: '1.5px solid var(--line)',
+        }}>
+          {TABS.map(t => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              style={{
+                flex: 1, padding: '10px 4px', borderRadius: 10, border: 'none',
+                background: tab === t.key ? 'var(--pink)' : 'transparent',
+                color: tab === t.key ? '#fff' : 'var(--ink-soft)',
+                fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13,
+                cursor: 'pointer', transition: 'all 0.15s',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+        {/* Content */}
+        {tab === 'week'     && <WeekTab     state={appState} onChange={handleChange} />}
+        {tab === 'progress' && <ProgressTab state={appState} />}
+        {tab === 'events'   && <EventsTab   state={appState} onChange={handleChange} />}
+      </div>
+    </>
   );
 }

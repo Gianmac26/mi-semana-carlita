@@ -1,26 +1,57 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@400;600;700&display=swap');
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --bg: #FBF7FF;
+  --bg-card: #FFFFFF;
+  --ink: #2B2140;
+  --ink-soft: #6B5C7A;
+  --pink: #FF5C8A;
+  --pink-soft: #FFE1EA;
+  --teal: #17B3A3;
+  --teal-soft: #DBF6F1;
+  --yellow: #FFB627;
+  --yellow-soft: #FFF3D9;
+  --lilac: #9B6BF2;
+  --lilac-soft: #EDE4FB;
+  --line: #E8DFF5;
+  --ok: #2FBE7A;
+  --ok-soft: #E1F7ED;
+  --font-title: 'Fredoka', sans-serif;
+  --font-body: 'Nunito', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #1C1626;
+    --bg-card: #251C33;
+    --ink: #F5EFFF;
+    --ink-soft: #C9BBDD;
+    --pink: #FF7FA3;
+    --pink-soft: #3A2233;
+    --teal: #3DD9C7;
+    --teal-soft: #1B3733;
+    --yellow: #FFD874;
+    --yellow-soft: #3A3120;
+    --lilac: #C39BFF;
+    --lilac-soft: #382A4D;
+    --line: #3A2E4D;
+    --ok: #57D999;
+    --ok-soft: #1B3327;
   }
 }
 
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
 }
+
+button { font-family: inherit; cursor: pointer; }
+input, textarea, select { font-family: inherit; }
+textarea { resize: vertical; }
