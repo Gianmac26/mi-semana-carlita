@@ -116,6 +116,62 @@ const ARTICLES: Article[] = [
       </>
     ),
   },
+  {
+    id: 'etapas',
+    emoji: '🌻',
+    title: 'Vivir tu edad: por qué cada etapa tiene su momento',
+    color: 'var(--yellow)',
+    colorSoft: 'var(--yellow-soft)',
+    content: (
+      <>
+        <p>Hay una frase que parece simple pero que vale mucho: <em>"Cada cosa a su tiempo."</em> Y es que la vida está diseñada en etapas, y cada una tiene cosas que le pertenecen. Saltarse alguna — aunque a veces parezca tentador — casi siempre trae problemas que no estabas lista para manejar.</p>
+
+        <h4>🧩 ¿Qué significa vivir tu edad?</h4>
+        <p>A los 14 años hay cosas que te corresponden: aprender, equivocarte sin que las consecuencias sean demasiado grandes, descubrir qué te gusta, construir amistades, bailar, reír, preocuparte por cosas de tu edad. Eso no es poco. Es, de hecho, muchísimo. El problema aparece cuando se mezclan preocupaciones o situaciones que le pertenecen a otra etapa — una más adulta — y para la que todavía no tienes las herramientas emocionales ni la experiencia para manejarla bien.</p>
+
+        <h4>⚠️ Lo que pasa cuando uno se adelanta</h4>
+        <p>No se trata de que no puedas hacer ciertas cosas porque "eres chica". Se trata de que algunas experiencias, cuando llegan demasiado temprano, pesan más de lo que uno puede cargar. Una responsabilidad que no te toca todavía, una relación con una dinámica que no entiendes del todo, una decisión que necesita más madurez de la que tienes en este momento — todo eso puede generar ansiedad, confusión o consecuencias que te acompañan mucho tiempo.</p>
+
+        <h4>🌱 Lo bonito de respetar el proceso</h4>
+        <p>Las personas que viven cada etapa bien — que no se saltaron nada — suelen llegar a la siguiente con más recursos. Llegan con más confianza, más claridad sobre quiénes son y qué quieren. En cambio, las que intentaron crecer demasiado rápido suelen tener que volver atrás en algún momento, a resolver cosas que quedaron pendientes.</p>
+
+        <h4>💛 Disfrutar de lo que tienes ahora</h4>
+        <p>Ser adolescente tiene cosas únicas que no vas a volver a tener: la ligereza de no tener que pagar cuentas, el tiempo para explorar quién eres, el permiso social de equivocarte y aprender. Eso tiene un valor enorme que muchas personas adultas recuerdan con nostalgia. Aprovéchalo.</p>
+
+        <p style={{ fontWeight: 700, marginTop: 8, borderTop: '1.5px solid var(--line)', paddingTop: 12 }}>
+          💜 La enseñanza: no hay apuro. Las cosas que le corresponden a los 20, a los 25 o a los 30 van a llegar. Lo que no regresa es la etapa que estás viviendo ahora. Vívela completa, sin querer adelantar el capítulo.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'abrazo',
+    emoji: '🤗',
+    title: 'El poder del abrazo: la forma más honesta de decir "te quiero"',
+    color: 'var(--pink)',
+    colorSoft: 'var(--pink-soft)',
+    content: (
+      <>
+        <p>Hay cosas que las palabras no alcanzan a decir del todo. A veces una frase bonita se queda corta, y lo que de verdad comunica lo que sientes es algo mucho más simple: un abrazo.</p>
+
+        <h4>🔬 Lo que le pasa a tu cuerpo cuando abrazas</h4>
+        <p>Cuando abrazas a alguien que quieres, tu cuerpo libera <em>oxitocina</em>, una hormona que se llama coloquialmente "la hormona del amor". Esta hormona reduce el estrés, baja la presión arterial, mejora el estado de ánimo y fortalece el vínculo con esa persona. No es magia — es biología. Y funciona tanto en quien abraza como en quien recibe el abrazo.</p>
+
+        <h4>👵 Los que más lo necesitan y menos lo piden</h4>
+        <p>Tus abuelos, tus tíos, tus papás — los adultos que te rodean muchas veces no piden un abrazo aunque lo necesiten. La vida adulta va llenando de distancia física sin que nadie lo note demasiado. Un abrazo tuyo, dado de corazón, puede cambiarle el día a alguien que lleva semanas sin sentir ese calor. No lo subestimes.</p>
+
+        <h4>💛 Abrazar también te ayuda a ti</h4>
+        <p>Cuando estás ansiosa, cuando algo te preocupa o cuando simplemente estás de mal humor, buscar el abrazo de alguien de confianza tiene un efecto real y medible en cómo te sientes. No es debilidad — es inteligencia emocional. Saber pedir y dar afecto es una de las habilidades más importantes que puedes desarrollar.</p>
+
+        <h4>🌸 La gratitud que se siente, no solo se dice</h4>
+        <p>Muchas veces queremos agradecer algo pero no sabemos cómo decirlo sin que suene raro. Un abrazo largo dice "gracias por estar", "gracias por todo lo que haces", "te quiero más de lo que sé expresar con palabras". Es la forma más honesta de gratitud que existe.</p>
+
+        <p style={{ fontWeight: 700, marginTop: 8, borderTop: '1.5px solid var(--line)', paddingTop: 12 }}>
+          💜 La enseñanza: no esperes una ocasión especial para abrazar a quienes quieres. No esperes que ellos lo pidan. Hazlo hoy — a tu mamá, a tu papá, a tu abuela, a quien tengas cerca. Ese gesto pequeño puede ser el momento más importante del día de esa persona, y del tuyo.
+        </p>
+      </>
+    ),
+  },
 ];
 
 export default function ArticlesTab() {
