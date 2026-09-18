@@ -38,3 +38,33 @@ export interface AppState {
 }
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+export interface Profile {
+  id: string;
+  family_id: string;
+  role: 'padre' | 'hijo';
+  display_name: string;
+  email: string;
+}
+
+export interface DbTask {
+  id: string;
+  family_id: string;
+  slug: string;
+  day_type: 'weekday' | 'saturday';
+  icon: string;
+  label: string;
+  time: string;
+  skippable: boolean;
+  sort_order: number;
+  active: boolean;
+}
+
+export interface InviteCode {
+  id: string;
+  family_id: string;
+  code: string;
+  role: 'padre' | 'hijo';
+  expires_at: string;
+  used_by: string | null;
+}
