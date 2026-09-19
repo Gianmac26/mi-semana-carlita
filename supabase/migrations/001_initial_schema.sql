@@ -33,9 +33,15 @@ create policy "family members can read profiles"
   on profiles for select
   using (family_id = (select family_id from profiles where id = auth.uid()));
 
+-- R4: with check freezes role and family_id — only display_name/email can change
 create policy "users can update own profile"
   on profiles for update
-  using (id = auth.uid());
+  using (id = auth.uid())
+  with check (
+    id = auth.uid()
+    and role = (select role from profiles where id = auth.uid())
+    and family_id = (select family_id from profiles where id = auth.uid())
+  );
 
 -- NOTE: No INSERT policy on profiles — R1 ruling: the brief's
 -- "allow insert during onboarding" policy is intentionally omitted.
