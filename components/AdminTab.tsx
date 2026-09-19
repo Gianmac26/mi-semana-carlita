@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type { DbTask, InviteCode, MiMundo } from '@/lib/types';
 
@@ -32,17 +32,29 @@ const INPUT: React.CSSProperties = {
   fontFamily: 'var(--font-body)', fontSize: 14, outline: 'none',
 };
 
+const MundoPrompts = [
+  { key: 'padres',   title: '🫶 Con mis papás' },
+  { key: 'cancion',  title: '🎵 Canción favorita' },
+  { key: 'risa',     title: '😂 Lo que me hizo reír' },
+  { key: 'aprendi',  title: '🌱 Algo que aprendí' },
+  { key: 'preocupa', title: '💭 Me preocupa...' },
+  { key: 'meta',     title: '🎯 Mi meta del mes' },
+  { key: 'pedido',   title: '💌 Le pediría a mis papás...' },
+];
+
 export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [mundo, setMundo] = useState<Record<string, string>>({});
   const [newTask, setNewTask] = useState({ icon: '', label: '', time: '', day_type: 'weekday' as 'weekday' | 'saturday', skippable: false });
   const [saving, setSaving] = useState(false);
+  const [taskError, setTaskError] = useState('');
+  const updateTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     if (section === 'invites') loadCodes();
     if (section === 'mundo') loadMundo();
-  }, [section]);
+  }, [section, familyId]);
 
   async function loadCodes() {
     const { data } = await supabase
@@ -77,6 +89,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
   async function addTask() {
     if (!newTask.icon.trim() || !newTask.label.trim()) return;
     setSaving(true);
+    setTaskError('');
     const slug = slugify(newTask.label);
     const maxOrder = tasks.filter(t => t.day_type === newTask.day_type).reduce((m, t) => Math.max(m, t.sort_order), -1);
     const { data } = await supabase
@@ -87,13 +100,17 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
         sort_order: maxOrder + 1, active: true,
       }).select().single();
     if (data) onTasksChange([...tasks, data as DbTask].sort((a, b) => a.sort_order - b.sort_order));
+    else setTaskError('Error al guardar la tarea. Intenta de nuevo.');
     setNewTask({ icon: '', label: '', time: '', day_type: 'weekday', skippable: false });
     setSaving(false);
   }
 
-  async function updateTask(id: string, patch: Partial<DbTask>) {
-    await supabase.from('tasks').update(patch).eq('id', id);
+  function updateTask(id: string, patch: Partial<DbTask>) {
     onTasksChange(tasks.map(t => t.id === id ? { ...t, ...patch } : t));
+    if (updateTimers.current[id]) clearTimeout(updateTimers.current[id]);
+    updateTimers.current[id] = setTimeout(() => {
+      supabase.from('tasks').update(patch).eq('id', id);
+    }, 600);
   }
 
   async function deleteTask(id: string) {
@@ -103,16 +120,6 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
 
   const weekdayTasks = tasks.filter(t => t.day_type === 'weekday');
   const saturdayTasks = tasks.filter(t => t.day_type === 'saturday');
-
-  const MundoPrompts = [
-    { key: 'padres',   title: '🫶 Con mis papás' },
-    { key: 'cancion',  title: '🎵 Canción favorita' },
-    { key: 'risa',     title: '😂 Lo que me hizo reír' },
-    { key: 'aprendi',  title: '🌱 Algo que aprendí' },
-    { key: 'preocupa', title: '💭 Me preocupa...' },
-    { key: 'meta',     title: '🎯 Mi meta del mes' },
-    { key: 'pedido',   title: '💌 Le pediría a mis papás...' },
-  ];
 
   return (
     <div>
@@ -170,6 +177,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
               style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
               {saving ? 'Guardando...' : 'Agregar tarea'}
             </button>
+            {taskError && <p style={{ color: 'var(--error, #e53e3e)', fontSize: 13, marginTop: 6 }}>{taskError}</p>}
           </div>
         </div>
       )}

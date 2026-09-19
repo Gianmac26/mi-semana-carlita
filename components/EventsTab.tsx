@@ -38,7 +38,7 @@ export default function EventsTab({ familyId, role }: Props) {
       .from('events').insert({ family_id: familyId, date, time, label: label.trim() })
       .select('id, date, time, label').single();
     if (data) {
-      setEvents(prev => [...prev, data as DbEvent].sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)));
+      setEvents(prev => [...prev, data as DbEvent]);
       setDate(''); setTime(''); setLabel('');
     }
   };
