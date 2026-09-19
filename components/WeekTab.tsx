@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppState, DayState, EnsayoState } from '@/lib/types';
 import type { DbTask } from '@/lib/types';
 import { DAY_KEYS, DayKey, getTasksForDayFromList, getDayCompletion } from '@/lib/tasks';
@@ -29,6 +29,8 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
     const t = getTodayDayKey();
     return (DAY_KEYS.includes(t as DayKey) ? t : 'mon') as DayKey;
   });
+  const [showEnsayo, setShowEnsayo] = useState<boolean>(false);
+  useEffect(() => { setShowEnsayo(false); }, [selectedDay]);
 
   const weekKey  = formatWeekKey(monday);
   const weekData = weeks[weekKey] ?? {};
@@ -36,6 +38,9 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
   const dayTasks = getTasksForDayFromList(tasks, selectedDay);
   const pct      = getDayCompletion(dayState as Record<string, unknown>, dayTasks);
   const isWeekday = !['sat', 'sun'].includes(selectedDay);
+
+  const ensayo = (dayState.ensayo ?? { start: '', end: '' }) as EnsayoState;
+  const hasEnsayoData = !!(ensayo.start || ensayo.end);
 
   const updateDay = (patch: Partial<DayState>) => {
     onChange(weekKey, selectedDay, { ...dayState, ...patch } as DayState);
@@ -115,21 +120,29 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
           </div>
         )}
 
-        {/* Ensayo — always visible */}
-        <div style={{
-          background: 'var(--teal-soft)', borderRadius: 18,
-          padding: 16, marginBottom: 12,
-        }}>
-          <h3 style={{
-            fontFamily: 'var(--font-title)', fontWeight: 700,
-            fontSize: 16, color: 'var(--teal)', marginBottom: 12,
+        {/* Ensayo — visible only when data exists or user opens it */}
+        {(hasEnsayoData || showEnsayo) ? (
+          <div style={{
+            background: 'var(--teal-soft)', borderRadius: 18,
+            padding: 16, marginBottom: 12,
           }}>
-            🎭 Ensayo con Elvis
-          </h3>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {(['start', 'end'] as const).map(f => {
-              const ensayo = (dayState.ensayo ?? { start: '', end: '' }) as EnsayoState;
-              return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h3 style={{
+                fontFamily: 'var(--font-title)', fontWeight: 700,
+                fontSize: 16, color: 'var(--teal)', margin: 0,
+              }}>
+                🎭 Ensayo con Elvis
+              </h3>
+              {!hasEnsayoData && (
+                <button
+                  onClick={() => setShowEnsayo(false)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-soft)', fontSize: 18, lineHeight: 1, padding: 2 }}
+                  title="Cerrar"
+                >×</button>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              {(['start', 'end'] as const).map(f => (
                 <div key={f} style={{ flex: 1 }}>
                   <label style={{
                     fontSize: 12, color: 'var(--ink-soft)',
@@ -144,10 +157,23 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
                     style={INPUT}
                   />
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <button
+            onClick={() => setShowEnsayo(true)}
+            style={{
+              width: '100%', padding: '10px 14px', marginBottom: 12,
+              background: 'var(--teal-soft)', borderRadius: 18,
+              border: '1.5px dashed var(--teal)', cursor: 'pointer',
+              color: 'var(--teal)', fontFamily: 'var(--font-title)',
+              fontWeight: 600, fontSize: 14, textAlign: 'left',
+            }}
+          >
+            🎭 Registrar ensayo con Elvis
+          </button>
+        )}
 
         {/* Notes — weekdays only */}
         {isWeekday && (
