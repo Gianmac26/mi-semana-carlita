@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { serviceSupabase as serviceClient } from '@/lib/supabase/service';
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 // GET /api/onboard — returns { isFirstUser: boolean }
 // Uses service-role client so RLS cannot blind the family count.
@@ -9,6 +9,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const serviceClient = getServiceSupabase();
   const { count } = await serviceClient
     .from('families')
     .select('id', { count: 'exact', head: true });
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const serviceClient = getServiceSupabase();
   // Service-role count — RLS-blind, accurate
   const { count } = await serviceClient
     .from('families')

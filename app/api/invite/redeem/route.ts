@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { serviceSupabase } from '@/lib/supabase/service';
+import { getServiceSupabase } from '@/lib/supabase/service';
 
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient();
@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
   if (existing) return NextResponse.json({ error: 'Ya tienes una cuenta activa' }, { status: 400 });
 
   const { code } = await request.json() as { code: string };
+  const serviceSupabase = getServiceSupabase();
 
   // Atomic claim: UPDATE only rows where used_by is still null.
   // If two concurrent requests race, only one UPDATE will match — the other gets 0 rows back.
