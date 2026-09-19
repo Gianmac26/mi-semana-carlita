@@ -1,3 +1,5 @@
+// DEPRECATED: This route was used with JSONBin. Now replaced by Supabase.
+// Kept only as a fallback during transition. Remove once migration is confirmed.
 import { NextResponse } from 'next/server';
 
 const API_KEY = process.env.JSONBIN_API_KEY ?? '';
