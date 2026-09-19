@@ -1,8 +1,9 @@
 'use client';
-import { Task } from '@/lib/tasks';
+
+interface TaskShape { slug: string; icon: string; label: string; time: string; skippable?: boolean }
 
 interface Props {
-  task: Task;
+  task: TaskShape;
   checked: boolean;
   skipped: boolean;
   onToggle: () => void;

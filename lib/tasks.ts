@@ -1,9 +1,12 @@
+import type { DbTask } from '@/lib/types';
+
+// Legacy seed data — used only by the migration script
 export interface Task {
   id: string;
   icon: string;
   label: string;
   time: string;
-  skippable?: boolean; // can be marked "Me quedé en casa"
+  skippable?: boolean;
 }
 
 export const WEEKDAY_TASKS: Task[] = [
@@ -28,21 +31,22 @@ export const DAY_LABELS: Record<DayKey, string> = {
   mon: 'Lun', tue: 'Mar', wed: 'Mié', thu: 'Jue', fri: 'Vie', sat: 'Sáb', sun: 'Dom',
 };
 
-export function getTasksForDay(day: DayKey): Task[] {
-  if (day === 'sat') return SATURDAY_TASKS;
+/** Returns the subset of tasks that apply to a given day. */
+export function getTasksForDayFromList(tasks: DbTask[], day: DayKey): DbTask[] {
   if (day === 'sun') return [];
-  return WEEKDAY_TASKS;
+  const type = day === 'sat' ? 'saturday' : 'weekday';
+  return tasks.filter(t => t.day_type === type && t.active);
 }
 
+/** Calculates completion % for one day given dynamic tasks from DB. */
 export function getDayCompletion(
   dayState: Record<string, unknown> | undefined,
-  day: DayKey,
+  tasks: DbTask[],
 ): number {
-  const tasks = getTasksForDay(day);
   if (!tasks.length || !dayState) return 0;
   const skipped = (dayState.skipped ?? {}) as Record<string, boolean>;
-  const active = tasks.filter(t => !skipped[t.id]);
+  const active = tasks.filter(t => !skipped[t.slug]);
   if (!active.length) return 100;
-  const done = active.filter(t => dayState[t.id] === true).length;
+  const done = active.filter(t => dayState[t.slug] === true).length;
   return Math.round((done / active.length) * 100);
 }
