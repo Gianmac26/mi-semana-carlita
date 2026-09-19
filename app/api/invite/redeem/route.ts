@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createServerClient } from '@/lib/supabase/server';
-
-const serviceSupabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+import { serviceSupabase } from '@/lib/supabase/service';
 
 export async function POST(request: NextRequest) {
   const supabase = await createServerClient();
@@ -18,15 +13,21 @@ export async function POST(request: NextRequest) {
 
   const { code } = await request.json() as { code: string };
 
-  const { data: invite } = await serviceSupabase
-    .from('invite_codes').select('*').eq('code', code)
-    .is('used_by', null).gt('expires_at', new Date().toISOString()).maybeSingle();
-  if (!invite)
+  // Atomic claim: UPDATE only rows where used_by is still null.
+  // If two concurrent requests race, only one UPDATE will match — the other gets 0 rows back.
+  const now = new Date().toISOString();
+  const { data: claimed } = await serviceSupabase
+    .from('invite_codes')
+    .update({ used_by: user.id, used_at: now })
+    .eq('code', code)
+    .is('used_by', null)
+    .gt('expires_at', now)
+    .select();
+
+  if (!claimed || claimed.length === 0)
     return NextResponse.json({ error: 'Código inválido, vencido o ya usado. Pide uno nuevo a tus papás.' }, { status: 400 });
 
-  await serviceSupabase
-    .from('invite_codes').update({ used_by: user.id, used_at: new Date().toISOString() }).eq('id', invite.id);
-
+  const invite = claimed[0];
   const displayName = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'Usuario';
   const { data: profile, error } = await serviceSupabase
     .from('profiles').insert({

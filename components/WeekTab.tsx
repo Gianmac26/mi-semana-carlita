@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import { AppState, DayState, EnsayoState } from '@/lib/types';
 import type { DbTask } from '@/lib/types';
 import { DAY_KEYS, DayKey, getTasksForDayFromList, getDayCompletion } from '@/lib/tasks';
@@ -12,7 +12,7 @@ import GoldenRules from './GoldenRules';
 interface Props {
   weeks: AppState['weeks'];
   tasks: DbTask[];
-  onChange: (newWeeks: AppState['weeks']) => void;
+  onChange: (weekKey: string, day: string, dayState: DayState) => void;
 }
 
 const INPUT: React.CSSProperties = {
@@ -29,7 +29,6 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
     const t = getTodayDayKey();
     return (DAY_KEYS.includes(t as DayKey) ? t : 'mon') as DayKey;
   });
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const weekKey  = formatWeekKey(monday);
   const weekData = weeks[weekKey] ?? {};
@@ -38,15 +37,9 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
   const pct      = getDayCompletion(dayState as Record<string, unknown>, dayTasks);
   const isWeekday = !['sat', 'sun'].includes(selectedDay);
 
-  const updateDay = useCallback((patch: Partial<DayState>) => {
-    onChange({
-      ...weeks,
-      [weekKey]: {
-        ...weekData,
-        [selectedDay]: { ...dayState, ...patch },
-      },
-    });
-  }, [weeks, onChange, weekKey, weekData, selectedDay, dayState]);
+  const updateDay = (patch: Partial<DayState>) => {
+    onChange(weekKey, selectedDay, { ...dayState, ...patch } as DayState);
+  };
 
   const toggleTask = (id: string) => updateDay({ [id]: !dayState[id] });
 
@@ -55,11 +48,7 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
     updateDay({ skipped: { ...prev, [id]: !prev[id] } });
   };
 
-  const handleNotes = (val: string) => {
-    updateDay({ notes: val });
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {}, 1000);
-  };
+  const handleNotes = (val: string) => updateDay({ notes: val });
 
   const handleEnsayo = (field: 'start' | 'end', val: string) => {
     const prev = (dayState.ensayo ?? { start: '', end: '' }) as EnsayoState;

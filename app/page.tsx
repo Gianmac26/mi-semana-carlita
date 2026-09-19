@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { Profile, DbTask, AppState } from '@/lib/types';
-import { DAY_KEYS } from '@/lib/tasks';
+import type { Profile, DbTask, AppState, DayState } from '@/lib/types';
 import StatusIndicator from '@/components/StatusIndicator';
 import WeekTab from '@/components/WeekTab';
 import ProgressTab from '@/components/ProgressTab';
@@ -102,25 +101,32 @@ export default function Home() {
     setCodeLoading(false);
   }
 
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleWeeksChange = useCallback((newWeeks: AppState['weeks']) => {
+  const handleWeeksChange = useCallback((weekKey: string, day: string, dayState: DayState) => {
     if (!profile) return;
-    setWeeks(newWeeks);
+    setWeeks(prev => ({
+      ...prev,
+      [weekKey]: { ...(prev[weekKey] ?? {}), [day]: dayState },
+    }));
     setSaveStatus('saving');
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    if (saveTimerRef.current)  clearTimeout(saveTimerRef.current);
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    const upsert = { family_id: profile.family_id, week_key: weekKey, day, state: dayState };
     saveTimerRef.current = setTimeout(async () => {
-      const upserts: { family_id: string; week_key: string; day: string; state: unknown }[] = [];
-      for (const [weekKey, weekData] of Object.entries(newWeeks)) {
-        for (const day of DAY_KEYS) {
-          const dayState = weekData[day];
-          if (dayState) upserts.push({ family_id: profile.family_id, week_key: weekKey, day, state: dayState });
-        }
-      }
-      if (upserts.length === 0) { setSaveStatus('saved'); return; }
       const { error } = await supabase
-        .from('weekly_state').upsert(upserts, { onConflict: 'family_id,week_key,day' });
-      setSaveStatus(error ? 'error' : 'saved');
+        .from('weekly_state').upsert(upsert, { onConflict: 'family_id,week_key,day' });
+      if (error) {
+        setSaveStatus('error');
+        retryTimerRef.current = setTimeout(async () => {
+          const { error: e2 } = await supabase
+            .from('weekly_state').upsert(upsert, { onConflict: 'family_id,week_key,day' });
+          setSaveStatus(e2 ? 'error' : 'saved');
+        }, 2000);
+      } else {
+        setSaveStatus('saved');
+      }
     }, 800);
   }, [profile]);
 
@@ -202,7 +208,7 @@ export default function Home() {
         {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} />}
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'articles' && <ArticlesTab />}
-        {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} />}
+        {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'admin'    && isAdmin && profile && <AdminTab familyId={profile.family_id} tasks={tasks} onTasksChange={setTasks} />}
       </div>
     </>

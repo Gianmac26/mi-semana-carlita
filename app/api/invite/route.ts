@@ -15,24 +15,21 @@ export async function POST(request: NextRequest) {
   if (!['padre', 'hijo'].includes(role))
     return NextResponse.json({ error: 'Rol inválido' }, { status: 400 });
 
-  let code: string | null = null;
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
+
+  // Try up to 5 times. The DB has a global unique index on active codes, so we rely on
+  // the insert itself to detect collisions (error code 23505) and retry with a new candidate.
   for (let i = 0; i < 5; i++) {
     const buf = new Uint8Array(3);
     crypto.getRandomValues(buf);
     const candidate = String(((buf[0] << 16) | (buf[1] << 8) | buf[2]) % 1_000_000).padStart(6, '0');
-    const { count } = await supabase
-      .from('invite_codes').select('id', { count: 'exact', head: true })
-      .eq('family_id', profile.family_id).eq('code', candidate)
-      .is('used_by', null).gt('expires_at', new Date().toISOString());
-    if (count === 0) { code = candidate; break; }
+    const { data: invite, error } = await supabase
+      .from('invite_codes')
+      .insert({ family_id: profile.family_id, code: candidate, role, created_by: user.id, expires_at: expiresAt })
+      .select().single();
+    if (!error) return NextResponse.json({ code: invite.code, expires_at: invite.expires_at });
+    if (error.code !== '23505') return NextResponse.json({ error: 'Error al crear código' }, { status: 500 });
+    // 23505 = unique_violation → try a different code
   }
-  if (!code) return NextResponse.json({ error: 'No se pudo generar el código' }, { status: 500 });
-
-  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-  const { data: invite, error } = await supabase
-    .from('invite_codes')
-    .insert({ family_id: profile.family_id, code, role, created_by: user.id, expires_at: expiresAt })
-    .select().single();
-  if (error) return NextResponse.json({ error: 'Error al crear código' }, { status: 500 });
-  return NextResponse.json({ code: invite.code, expires_at: invite.expires_at });
+  return NextResponse.json({ error: 'No se pudo generar el código' }, { status: 500 });
 }

@@ -13,6 +13,8 @@ type Section = 'tasks' | 'invites' | 'mundo';
 
 const supabase = createBrowserClient();
 
+const RESERVED_SLUGS = new Set(['ensayo', 'notes', 'skipped']);
+
 function slugify(label: string): string {
   return label
     .toLowerCase()
@@ -45,7 +47,7 @@ const MundoPrompts = [
 export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
-  const [mundo, setMundo] = useState<Record<string, string>>({});
+  const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, { displayName: string; answers: Record<string, string> }>>({});
   const [newTask, setNewTask] = useState({ icon: '', label: '', time: '', day_type: 'weekday' as 'weekday' | 'saturday', skippable: false });
   const [saving, setSaving] = useState(false);
   const [taskError, setTaskError] = useState('');
@@ -67,11 +69,21 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
   }
 
   async function loadMundo() {
-    const { data } = await supabase
-      .from('mi_mundo_entries').select('key, value').eq('family_id', familyId);
-    const m: Record<string, string> = {};
-    for (const row of (data ?? [])) m[row.key] = row.value;
-    setMundo(m);
+    const { data: entries } = await supabase
+      .from('mi_mundo_entries').select('key, value, author_id').eq('family_id', familyId);
+    if (!entries || entries.length === 0) { setMundoByAuthor({}); return; }
+    const authorIds = [...new Set(entries.map(e => e.author_id as string))];
+    const { data: profiles } = await supabase
+      .from('profiles').select('id, display_name').in('id', authorIds);
+    const nameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name as string]));
+    const grouped: Record<string, { displayName: string; answers: Record<string, string> }> = {};
+    for (const row of entries) {
+      if (!grouped[row.author_id]) {
+        grouped[row.author_id] = { displayName: nameMap[row.author_id] ?? 'Hijo/a', answers: {} };
+      }
+      grouped[row.author_id].answers[row.key] = row.value;
+    }
+    setMundoByAuthor(grouped);
   }
 
   async function generateCode(role: 'padre' | 'hijo') {
@@ -89,9 +101,13 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
 
   async function addTask() {
     if (!newTask.icon.trim() || !newTask.label.trim()) return;
+    const slug = slugify(newTask.label);
+    if (RESERVED_SLUGS.has(slug)) {
+      setTaskError('Ese nombre está reservado (ensayo, notas, saltado). Elige otro nombre.');
+      return;
+    }
     setSaving(true);
     setTaskError('');
-    const slug = slugify(newTask.label);
     const maxOrder = tasks.filter(t => t.day_type === newTask.day_type).reduce((m, t) => Math.max(m, t.sort_order), -1);
     const { data } = await supabase
       .from('tasks').insert({
@@ -215,12 +231,25 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
       {section === 'mundo' && (
         <div>
           <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginBottom: 16, fontStyle: 'italic' }}>Solo lectura — solo tu hijo/a puede editar esto.</p>
-          {MundoPrompts.map(p => (
-            <div key={p.key} style={{ ...CARD }}>
-              <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-soft)', marginBottom: 6 }}>{p.title}</div>
-              <div style={{ fontSize: 14, color: mundo[p.key] ? 'var(--ink)' : 'var(--ink-soft)', fontStyle: mundo[p.key] ? 'normal' : 'italic' }}>
-                {mundo[p.key] || '(sin responder todavía)'}
-              </div>
+          {Object.keys(mundoByAuthor).length === 0 ? (
+            <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '20px 0' }}>
+              Tu hijo/a todavía no ha escrito nada.
+            </p>
+          ) : Object.values(mundoByAuthor).map(({ displayName, answers }) => (
+            <div key={displayName} style={{ marginBottom: 24 }}>
+              {Object.keys(mundoByAuthor).length > 1 && (
+                <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--pink)', marginBottom: 10 }}>
+                  {displayName}
+                </h4>
+              )}
+              {MundoPrompts.map(p => (
+                <div key={p.key} style={{ ...CARD }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-soft)', marginBottom: 6 }}>{p.title}</div>
+                  <div style={{ fontSize: 14, color: answers[p.key] ? 'var(--ink)' : 'var(--ink-soft)', fontStyle: answers[p.key] ? 'normal' : 'italic' }}>
+                    {answers[p.key] || '(sin responder todavía)'}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
         </div>

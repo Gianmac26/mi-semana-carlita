@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { createClient } from '@supabase/supabase-js';
-
-const serviceClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+import { serviceSupabase as serviceClient } from '@/lib/supabase/service';
 
 // GET /api/onboard — returns { isFirstUser: boolean }
 // Uses service-role client so RLS cannot blind the family count.

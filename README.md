@@ -39,6 +39,10 @@ En Vercel estas variables se configuran en **Settings → Environment Variables*
 5. El primer usuario en hacer login se convierte en `padre` y crea la familia
 6. Para invitar a un hijo/a: **Admin → Invitaciones → Generar código**
 
+## Limitaciones conocidas
+
+- **Porcentajes históricos en Progreso:** La pantalla "Últimas semanas" calcula el porcentaje de cumplimiento usando la lista de tareas *activa hoy*, no las que existían en esa semana. Si el padre agrega o elimina tareas, los porcentajes históricos cambian retroactivamente. Es el comportamiento esperado dado que las tareas son editables; no es un bug. Si en el futuro se requiere precisión histórica, hay que guardar un snapshot de qué tareas estaban activas por semana (columna `activated_at` / `deactivated_at` en la tabla `tasks`).
+
 ## Migración desde JSONBin
 
 Ver `scripts/migrate-jsonbin-to-supabase.ts`. Requiere:
