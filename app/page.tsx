@@ -145,7 +145,7 @@ export default function Home() {
   if (pageState === 'no-profile-first') return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
-        <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--pink)', fontSize: 22, marginBottom: 8 }}>¡Bienvenida! 🎉</h2>
+        <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--pink)', fontSize: 22, marginBottom: 8 }}>¡Bienvenid@! 🎉</h2>
         <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginBottom: 24 }}>Eres la primera persona en entrar. ¿Cuál es tu nombre?</p>
         <input value={displayName} onChange={e => setDisplayName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleCreateFamily()} placeholder="Tu nombre"
