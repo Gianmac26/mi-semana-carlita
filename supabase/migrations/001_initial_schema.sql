@@ -10,13 +10,6 @@ create table families (
 
 alter table families enable row level security;
 
-create policy "family members can read their family"
-  on families for select
-  using (id in (select family_id from profiles where id = auth.uid()));
-
--- NOTE: No INSERT policy on families — all family creation goes through
--- service-role Route Handlers only (Task 5/6). Browser clients cannot insert.
-
 -- ── profiles ────────────────────────────────────────────────────────────────
 create table profiles (
   id           uuid primary key references auth.users(id) on delete cascade,
@@ -29,9 +22,27 @@ create table profiles (
 
 alter table profiles enable row level security;
 
+-- SECURITY DEFINER helpers — bypass RLS on inner profile reads to avoid 42P17
+-- infinite recursion. All policies use these instead of inline subqueries.
+create function auth_family_id() returns uuid
+  language sql stable security definer set search_path = public as
+  $$ select family_id from profiles where id = auth.uid() $$;
+
+create function auth_role() returns text
+  language sql stable security definer set search_path = public as
+  $$ select role from profiles where id = auth.uid() $$;
+
+-- families policy — now profiles table exists
+create policy "family members can read their family"
+  on families for select
+  using (id = auth_family_id());
+
+-- NOTE: No INSERT policy on families — all family creation via service-role /api/onboard
+
+-- profiles policies
 create policy "family members can read profiles"
   on profiles for select
-  using (family_id = (select family_id from profiles where id = auth.uid()));
+  using (family_id = auth_family_id());
 
 -- R4: with check freezes role and family_id — only display_name/email can change
 create policy "users can update own profile"
@@ -39,15 +50,11 @@ create policy "users can update own profile"
   using (id = auth.uid())
   with check (
     id = auth.uid()
-    and role = (select role from profiles where id = auth.uid())
-    and family_id = (select family_id from profiles where id = auth.uid())
+    and role = auth_role()
+    and family_id = auth_family_id()
   );
 
--- NOTE: No INSERT policy on profiles — R1 ruling: the brief's
--- "allow insert during onboarding" policy is intentionally omitted.
--- Any authenticated Google user could self-insert into any family with
--- any role, bypassing the invite code flow. All profile+family creation
--- goes through service-role Route Handlers only (Task 5/6).
+-- NOTE: No INSERT policy on profiles — all profile creation via service-role handlers
 
 -- ── tasks ────────────────────────────────────────────────────────────────────
 create table tasks (
@@ -69,27 +76,27 @@ alter table tasks enable row level security;
 
 create policy "family members can read tasks"
   on tasks for select
-  using (family_id = (select family_id from profiles where id = auth.uid()));
+  using (family_id = auth_family_id());
 
 create policy "only padre can insert tasks"
   on tasks for insert
   with check (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 create policy "only padre can update tasks"
   on tasks for update
   using (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 create policy "only padre can delete tasks"
   on tasks for delete
   using (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 -- ── weekly_state ─────────────────────────────────────────────────────────────
@@ -106,17 +113,17 @@ alter table weekly_state enable row level security;
 
 create policy "family members can read weekly state"
   on weekly_state for select
-  using (family_id = (select family_id from profiles where id = auth.uid()));
+  using (family_id = auth_family_id());
 
 create policy "family members can insert weekly state"
   on weekly_state for insert
-  with check (family_id = (select family_id from profiles where id = auth.uid()));
+  with check (family_id = auth_family_id());
 
--- R3: with check added to prevent a client from switching family_id on update
+-- R3: with check prevents switching family_id on update
 create policy "family members can update weekly state"
   on weekly_state for update
-  using (family_id = (select family_id from profiles where id = auth.uid()))
-  with check (family_id = (select family_id from profiles where id = auth.uid()));
+  using (family_id = auth_family_id())
+  with check (family_id = auth_family_id());
 
 -- ── events ───────────────────────────────────────────────────────────────────
 create table events (
@@ -133,20 +140,20 @@ alter table events enable row level security;
 
 create policy "family members can read events"
   on events for select
-  using (family_id = (select family_id from profiles where id = auth.uid()));
+  using (family_id = auth_family_id());
 
 create policy "only padre can insert events"
   on events for insert
   with check (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 create policy "only padre can delete events"
   on events for delete
   using (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 -- ── mi_mundo_entries ─────────────────────────────────────────────────────────
@@ -164,17 +171,24 @@ alter table mi_mundo_entries enable row level security;
 
 create policy "family members can read mi mundo"
   on mi_mundo_entries for select
-  using (family_id = (select family_id from profiles where id = auth.uid()));
+  using (family_id = auth_family_id());
 
+-- SEC-4: family_id scope added to prevent cross-family injection
 create policy "author can insert mi mundo"
   on mi_mundo_entries for insert
-  with check (author_id = auth.uid());
+  with check (
+    author_id = auth.uid()
+    and family_id = auth_family_id()
+  );
 
--- R2: with check added to prevent a client from reassigning author_id on update
+-- R2 + SEC-4: both with checks applied
 create policy "author can update own mi mundo"
   on mi_mundo_entries for update
   using (author_id = auth.uid())
-  with check (author_id = auth.uid());
+  with check (
+    author_id = auth.uid()
+    and family_id = auth_family_id()
+  );
 
 -- ── invite_codes ─────────────────────────────────────────────────────────────
 create table invite_codes (
@@ -189,33 +203,37 @@ create table invite_codes (
   created_at timestamptz default now()
 );
 
+-- SEC-5-partial: prevent two active codes from sharing a code value
+create unique index invite_codes_active_code_idx on invite_codes(code)
+  where used_by is null;
+
 alter table invite_codes enable row level security;
 
 -- Children cannot see invite_codes at all — only padre of same family
 create policy "only padre can read invite codes"
   on invite_codes for select
   using (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 create policy "only padre can insert invite codes"
   on invite_codes for insert
   with check (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 create policy "only padre can update invite codes"
   on invite_codes for update
   using (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );
 
 create policy "only padre can delete invite codes"
   on invite_codes for delete
   using (
-    family_id = (select family_id from profiles where id = auth.uid())
-    and (select role from profiles where id = auth.uid()) = 'padre'
+    family_id = auth_family_id()
+    and auth_role() = 'padre'
   );

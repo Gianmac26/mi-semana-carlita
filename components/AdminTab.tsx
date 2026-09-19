@@ -50,6 +50,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
   const [saving, setSaving] = useState(false);
   const [taskError, setTaskError] = useState('');
   const updateTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingPatches = useRef<Record<string, Partial<DbTask>>>({});
 
   useEffect(() => {
     if (section === 'invites') loadCodes();
@@ -107,9 +108,12 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
 
   function updateTask(id: string, patch: Partial<DbTask>) {
     onTasksChange(tasks.map(t => t.id === id ? { ...t, ...patch } : t));
+    pendingPatches.current[id] = { ...pendingPatches.current[id], ...patch };
     if (updateTimers.current[id]) clearTimeout(updateTimers.current[id]);
-    updateTimers.current[id] = setTimeout(() => {
-      supabase.from('tasks').update(patch).eq('id', id);
+    updateTimers.current[id] = setTimeout(async () => {
+      const merged = pendingPatches.current[id];
+      delete pendingPatches.current[id];
+      if (merged) await supabase.from('tasks').update(merged).eq('id', id);
     }, 600);
   }
 

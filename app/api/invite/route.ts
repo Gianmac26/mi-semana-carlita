@@ -17,7 +17,9 @@ export async function POST(request: NextRequest) {
 
   let code: string | null = null;
   for (let i = 0; i < 5; i++) {
-    const candidate = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+    const buf = new Uint8Array(3);
+    crypto.getRandomValues(buf);
+    const candidate = String(((buf[0] << 16) | (buf[1] << 8) | buf[2]) % 1_000_000).padStart(6, '0');
     const { count } = await supabase
       .from('invite_codes').select('id', { count: 'exact', head: true })
       .eq('family_id', profile.family_id).eq('code', candidate)

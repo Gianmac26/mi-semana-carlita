@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type { Profile, DbTask, AppState } from '@/lib/types';
 import { DAY_KEYS } from '@/lib/tasks';
@@ -45,9 +45,9 @@ export default function Home() {
       const { data: profileRow } = await supabase
         .from('profiles').select('*').eq('id', user.id).maybeSingle();
       if (profileRow) { await loadAppData(profileRow as Profile); return; }
-      const { count } = await supabase
-        .from('families').select('id', { count: 'exact', head: true });
-      setPageState(count === 0 ? 'no-profile-first' : 'no-profile-code');
+      const res = await fetch('/api/onboard');
+      const { isFirstUser } = await res.json();
+      setPageState(isFirstUser ? 'no-profile-first' : 'no-profile-code');
     }
     init();
   }, []);
@@ -102,21 +102,26 @@ export default function Home() {
     setCodeLoading(false);
   }
 
-  const handleWeeksChange = useCallback(async (newWeeks: AppState['weeks']) => {
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleWeeksChange = useCallback((newWeeks: AppState['weeks']) => {
     if (!profile) return;
     setWeeks(newWeeks);
     setSaveStatus('saving');
-    const upserts: { family_id: string; week_key: string; day: string; state: unknown }[] = [];
-    for (const [weekKey, weekData] of Object.entries(newWeeks)) {
-      for (const day of DAY_KEYS) {
-        const dayState = weekData[day];
-        if (dayState) upserts.push({ family_id: profile.family_id, week_key: weekKey, day, state: dayState });
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      const upserts: { family_id: string; week_key: string; day: string; state: unknown }[] = [];
+      for (const [weekKey, weekData] of Object.entries(newWeeks)) {
+        for (const day of DAY_KEYS) {
+          const dayState = weekData[day];
+          if (dayState) upserts.push({ family_id: profile.family_id, week_key: weekKey, day, state: dayState });
+        }
       }
-    }
-    if (upserts.length === 0) { setSaveStatus('saved'); return; }
-    const { error } = await supabase
-      .from('weekly_state').upsert(upserts, { onConflict: 'family_id,week_key,day' });
-    setSaveStatus(error ? 'error' : 'saved');
+      if (upserts.length === 0) { setSaveStatus('saved'); return; }
+      const { error } = await supabase
+        .from('weekly_state').upsert(upserts, { onConflict: 'family_id,week_key,day' });
+      setSaveStatus(error ? 'error' : 'saved');
+    }, 800);
   }, [profile]);
 
   async function handleSignOut() {
