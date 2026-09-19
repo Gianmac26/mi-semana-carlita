@@ -43,6 +43,8 @@ En Vercel estas variables se configuran en **Settings → Environment Variables*
 
 - **Porcentajes históricos en Progreso:** La pantalla "Últimas semanas" calcula el porcentaje de cumplimiento usando la lista de tareas *activa hoy*, no las que existían en esa semana. Si el padre agrega o elimina tareas, los porcentajes históricos cambian retroactivamente. Es el comportamiento esperado dado que las tareas son editables; no es un bug. Si en el futuro se requiere precisión histórica, hay que guardar un snapshot de qué tareas estaban activas por semana (columna `activated_at` / `deactivated_at` en la tabla `tasks`).
 
+- **Migración previa bloquea el primer login como padre:** Si corriste el script de migración (`migrate-jsonbin-to-supabase.ts`) antes de que ningún usuario real se registrara, la tabla `families` ya tiene una fila pero `profiles` está vacía. En versiones anteriores `/api/onboard` contaba `families` para detectar al primer usuario — como la family ya existía, nadie podía registrarse como padre. **Fix aplicado (2026-09-19):** el check ahora cuenta `profiles === 0`, no `families === 0`, y reutiliza la family existente en vez de crear una nueva. Si quedás bloqueado en la pantalla de código después de una migración, corre el script de desbloqueo: `scripts/create-first-padre.ts`.
+
 ## Migración desde JSONBin
 
 Ver `scripts/migrate-jsonbin-to-supabase.ts`. Requiere:
