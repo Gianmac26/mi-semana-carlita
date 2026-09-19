@@ -1,23 +1,24 @@
 'use client';
-import { DAY_KEYS, DAY_LABELS, DayKey, getDayCompletion, getTasksForDay } from '@/lib/tasks';
-import { WeekData } from '@/lib/types';
+import { DAY_KEYS, DAY_LABELS, DayKey, getDayCompletion, getTasksForDayFromList } from '@/lib/tasks';
+import type { DbTask, WeekData } from '@/lib/types';
 
 interface Props {
   weekData: WeekData;
+  tasks: DbTask[];
   selected: DayKey;
   onSelect: (d: DayKey) => void;
   todayKey: string;
 }
 
-export default function DayChips({ weekData, selected, onSelect, todayKey }: Props) {
+export default function DayChips({ weekData, tasks, selected, onSelect, todayKey }: Props) {
   return (
     <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 2px 6px' }}>
       {DAY_KEYS.map(day => {
-        const pct = getDayCompletion(weekData[day] as Record<string, unknown>, day);
-        const tasks = getTasksForDay(day);
+        const dayTasks = getTasksForDayFromList(tasks, day);
+        const pct = getDayCompletion(weekData[day] as Record<string, unknown>, dayTasks);
         const isToday = day === todayKey;
         const isSel = selected === day;
-        const dotColor = !tasks.length
+        const dotColor = !dayTasks.length
           ? 'var(--line)'
           : pct === 100 ? 'var(--ok)'
           : pct > 0 ? 'var(--yellow)'

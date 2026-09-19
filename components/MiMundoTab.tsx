@@ -1,11 +1,9 @@
 'use client';
-import { useRef } from 'react';
-import { AppState, MiMundo } from '@/lib/types';
+import { useState, useEffect, useRef } from 'react';
+import { createBrowserClient } from '@/lib/supabase/client';
+import type { MiMundo } from '@/lib/types';
 
-interface Props {
-  state: AppState;
-  onChange: (s: AppState) => void;
-}
+interface Props { familyId: string; role: string; }
 
 interface Prompt {
   key: keyof MiMundo;
@@ -75,23 +73,130 @@ const PROMPTS: Prompt[] = [
   },
 ];
 
-export default function MiMundoTab({ state, onChange }: Props) {
+type AuthorAnswers = { displayName: string; answers: Record<string, string> };
+
+const supabase = createBrowserClient();
+
+export default function MiMundoTab({ familyId, role }: Props) {
+  // hijo state: own editable answers
+  const [mundo, setMundo] = useState<MiMundo>({});
+  const [userId, setUserId] = useState<string | null>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const handleChange = (key: keyof MiMundo, value: string) => {
-    const newState: AppState = {
-      ...state,
-      miMundo: { ...(state.miMundo ?? {}), [key]: value },
-    };
-    onChange(newState);
+  // padre state: read-only view of all children's answers
+  const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, AuthorAnswers>>({});
 
-    // Debounce per-field (save 1s after typing stops)
+  useEffect(() => {
+    async function load() {
+      if (role === 'padre') {
+        const { data: entries } = await supabase
+          .from('mi_mundo_entries').select('key, value, author_id')
+          .eq('family_id', familyId);
+        if (!entries || entries.length === 0) { setMundoByAuthor({}); return; }
+        const authorIds = [...new Set(entries.map(e => e.author_id as string))];
+        const { data: profiles } = await supabase
+          .from('profiles').select('id, display_name').in('id', authorIds);
+        const nameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name as string]));
+        const grouped: Record<string, AuthorAnswers> = {};
+        for (const row of entries) {
+          if (!grouped[row.author_id]) {
+            grouped[row.author_id] = { displayName: nameMap[row.author_id] ?? 'Hijo/a', answers: {} };
+          }
+          grouped[row.author_id].answers[row.key] = row.value;
+        }
+        setMundoByAuthor(grouped);
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setUserId(user.id);
+        const { data } = await supabase
+          .from('mi_mundo_entries').select('key, value')
+          .eq('family_id', familyId).eq('author_id', user.id);
+        const assembled: MiMundo = {};
+        for (const row of (data ?? [])) assembled[row.key as keyof MiMundo] = row.value;
+        setMundo(assembled);
+      }
+    }
+    load();
+  }, [familyId, role]);
+
+  const handleChange = (key: keyof MiMundo, value: string) => {
+    setMundo(prev => ({ ...prev, [key]: value }));
     if (timers.current[key]) clearTimeout(timers.current[key]);
-    timers.current[key] = setTimeout(() => {}, 1000);
+    timers.current[key] = setTimeout(async () => {
+      if (!userId) return;
+      await supabase.from('mi_mundo_entries').upsert(
+        { family_id: familyId, author_id: userId, key, value, updated_at: new Date().toISOString() },
+        { onConflict: 'family_id,author_id,key' },
+      );
+    }, 1000);
   };
 
-  const mundo = state.miMundo ?? {};
+  // ─── Padre: read-only view ───────────────────────────────────────────────
+  if (role === 'padre') {
+    const authors = Object.values(mundoByAuthor);
+    return (
+      <div>
+        <div style={{
+          background: 'linear-gradient(135deg, var(--pink-soft), var(--lilac-soft))',
+          borderRadius: 20, padding: '18px 20px', marginBottom: 24,
+          border: '1.5px solid var(--line)',
+        }}>
+          <h3 style={{
+            fontFamily: 'var(--font-title)', fontWeight: 700,
+            fontSize: 20, color: 'var(--pink)', marginBottom: 6,
+          }}>
+            💜 Mi mundo
+          </h3>
+          <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
+            Solo lectura — solo tu hijo/a puede editar esto. 🌸
+          </p>
+        </div>
 
+        {authors.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '32px 0' }}>
+            Tu hijo/a todavía no ha escrito nada.
+          </p>
+        ) : authors.map(({ displayName, answers }) => (
+          <div key={displayName} style={{ marginBottom: 32 }}>
+            {authors.length > 1 && (
+              <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, color: 'var(--pink)', marginBottom: 12 }}>
+                {displayName}
+              </h4>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {PROMPTS.map(p => (
+                <div key={p.key} style={{
+                  borderRadius: 18, overflow: 'hidden',
+                  border: '1.5px solid var(--line)',
+                  background: 'var(--bg-card)',
+                  boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+                }}>
+                  <div style={{
+                    background: p.colorSoft, padding: '10px 16px',
+                    display: 'flex', alignItems: 'center', gap: 10,
+                  }}>
+                    <span style={{ fontSize: 20 }}>{p.emoji}</span>
+                    <span style={{
+                      fontFamily: 'var(--font-title)', fontWeight: 700,
+                      fontSize: 13.5, color: p.color, lineHeight: 1.3,
+                    }}>
+                      {p.title}
+                    </span>
+                  </div>
+                  <div style={{ padding: '12px 16px', fontSize: 14, color: answers[p.key] ? 'var(--ink)' : 'var(--ink-soft)', fontStyle: answers[p.key] ? 'normal' : 'italic', lineHeight: 1.6 }}>
+                    {answers[p.key] || '(sin responder todavía)'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // ─── Hijo: editable view ─────────────────────────────────────────────────
   return (
     <div>
       {/* Header */}

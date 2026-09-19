@@ -1,26 +1,30 @@
 'use client';
 import { useState } from 'react';
 import { AppState } from '@/lib/types';
-import { DAY_KEYS, DayKey, getDayCompletion, getTasksForDay } from '@/lib/tasks';
+import type { DbTask } from '@/lib/types';
+import { DAY_KEYS, DayKey, getDayCompletion, getTasksForDayFromList } from '@/lib/tasks';
 import { getMondayOfWeek, formatWeekKey, formatDateRange } from '@/lib/utils';
 
-interface Props { state: AppState }
+interface Props { state: AppState; tasks: DbTask[] }
 
 const CHART_DAYS: DayKey[]  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const CHART_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const NOTE_DAYS: DayKey[]   = ['mon', 'tue', 'wed', 'thu', 'fri'];
 const NOTE_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
-function weekAvg(wd: Record<string, unknown>, upToIdx: number | null): number {
+function weekAvg(wd: Record<string, unknown>, tasks: DbTask[], upToIdx: number | null): number {
   const days: DayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const slice = upToIdx === null ? days : days.slice(0, upToIdx + 1);
-  const withTasks = slice.filter(d => getTasksForDay(d).length > 0);
+  const withTasks = slice.filter(d => getTasksForDayFromList(tasks, d).length > 0);
   if (!withTasks.length) return 0;
-  const sum = withTasks.reduce((acc, d) => acc + getDayCompletion(wd[d] as Record<string, unknown>, d), 0);
+  const sum = withTasks.reduce((acc, d) => {
+    const t = getTasksForDayFromList(tasks, d);
+    return acc + getDayCompletion(wd[d] as Record<string, unknown>, t);
+  }, 0);
   return Math.round(sum / withTasks.length);
 }
 
-export default function ProgressTab({ state }: Props) {
+export default function ProgressTab({ state, tasks }: Props) {
   const today = new Date();
   const [monday] = useState(() => getMondayOfWeek(today));
   const weekKey  = formatWeekKey(monday);
@@ -36,7 +40,7 @@ export default function ProgressTab({ state }: Props) {
     m.setDate(m.getDate() - (i + 1) * 7);
     const wk = formatWeekKey(m);
     const wd = (state.weeks[wk] ?? {}) as Record<string, unknown>;
-    return { monday: m, weekKey: wk, wd, avg: weekAvg(wd, null) };
+    return { monday: m, weekKey: wk, wd, avg: weekAvg(wd, tasks, null) };
   }).filter(w => Object.keys(w.wd).length > 0);
 
   return (
@@ -58,7 +62,7 @@ export default function ProgressTab({ state }: Props) {
           {CHART_DAYS.map((day, i) => {
             const isPastOrToday = i <= todayChartIdx;
             const pct = isPastOrToday
-              ? getDayCompletion(weekData[day] as Record<string, unknown>, day)
+              ? getDayCompletion(weekData[day] as Record<string, unknown>, getTasksForDayFromList(tasks, day))
               : null;
             const barH = pct !== null ? Math.max(4, pct) : 0;
             const barColor = pct === null ? 'transparent'

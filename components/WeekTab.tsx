@@ -1,7 +1,8 @@
 'use client';
-import { useState, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import { AppState, DayState, EnsayoState } from '@/lib/types';
-import { DAY_KEYS, DayKey, getTasksForDay, getDayCompletion } from '@/lib/tasks';
+import type { DbTask } from '@/lib/types';
+import { DAY_KEYS, DayKey, getTasksForDayFromList, getDayCompletion } from '@/lib/tasks';
 import { getMondayOfWeek, formatWeekKey, getTodayDayKey } from '@/lib/utils';
 import WeekSelector from './WeekSelector';
 import DayChips from './DayChips';
@@ -9,8 +10,9 @@ import TaskItem from './TaskItem';
 import GoldenRules from './GoldenRules';
 
 interface Props {
-  state: AppState;
-  onChange: (newState: AppState) => void;
+  weeks: AppState['weeks'];
+  tasks: DbTask[];
+  onChange: (weekKey: string, day: string, dayState: DayState) => void;
 }
 
 const INPUT: React.CSSProperties = {
@@ -20,34 +22,24 @@ const INPUT: React.CSSProperties = {
   outline: 'none',
 };
 
-export default function WeekTab({ state, onChange }: Props) {
+export default function WeekTab({ weeks, tasks, onChange }: Props) {
   const todayKey = getTodayDayKey();
   const [monday, setMonday] = useState<Date>(() => getMondayOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState<DayKey>(() => {
     const t = getTodayDayKey();
     return (DAY_KEYS.includes(t as DayKey) ? t : 'mon') as DayKey;
   });
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const weekKey  = formatWeekKey(monday);
-  const weekData = state.weeks[weekKey] ?? {};
+  const weekData = weeks[weekKey] ?? {};
   const dayState = (weekData[selectedDay] ?? {}) as DayState;
-  const tasks    = getTasksForDay(selectedDay);
-  const pct      = getDayCompletion(dayState as Record<string, unknown>, selectedDay);
+  const dayTasks = getTasksForDayFromList(tasks, selectedDay);
+  const pct      = getDayCompletion(dayState as Record<string, unknown>, dayTasks);
   const isWeekday = !['sat', 'sun'].includes(selectedDay);
 
-  const updateDay = useCallback((patch: Partial<DayState>) => {
-    onChange({
-      ...state,
-      weeks: {
-        ...state.weeks,
-        [weekKey]: {
-          ...weekData,
-          [selectedDay]: { ...dayState, ...patch },
-        },
-      },
-    });
-  }, [state, onChange, weekKey, weekData, selectedDay, dayState]);
+  const updateDay = (patch: Partial<DayState>) => {
+    onChange(weekKey, selectedDay, { ...dayState, ...patch } as DayState);
+  };
 
   const toggleTask = (id: string) => updateDay({ [id]: !dayState[id] });
 
@@ -56,11 +48,7 @@ export default function WeekTab({ state, onChange }: Props) {
     updateDay({ skipped: { ...prev, [id]: !prev[id] } });
   };
 
-  const handleNotes = (val: string) => {
-    updateDay({ notes: val });
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {}, 1000);
-  };
+  const handleNotes = (val: string) => updateDay({ notes: val });
 
   const handleEnsayo = (field: 'start' | 'end', val: string) => {
     const prev = (dayState.ensayo ?? { start: '', end: '' }) as EnsayoState;
@@ -72,6 +60,7 @@ export default function WeekTab({ state, onChange }: Props) {
       <WeekSelector monday={monday} onChange={setMonday} />
       <DayChips
         weekData={weekData}
+        tasks={tasks}
         selected={selectedDay}
         onSelect={setSelectedDay}
         todayKey={todayKey}
@@ -79,7 +68,7 @@ export default function WeekTab({ state, onChange }: Props) {
 
       <div style={{ marginTop: 20 }}>
         {/* Tasks */}
-        {tasks.length > 0 && (
+        {dayTasks.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <div style={{
               display: 'flex', alignItems: 'center',
@@ -101,16 +90,16 @@ export default function WeekTab({ state, onChange }: Props) {
                 {pct}% cumplido
               </span>
             </div>
-            {tasks.map(task => {
-              const skipped = !!((dayState.skipped as Record<string,boolean> | undefined)?.[task.id]);
+            {dayTasks.map(task => {
+              const skipped = !!((dayState.skipped as Record<string,boolean> | undefined)?.[task.slug]);
               return (
                 <TaskItem
-                  key={task.id}
+                  key={task.slug}
                   task={task}
-                  checked={!!dayState[task.id]}
+                  checked={!!dayState[task.slug]}
                   skipped={skipped}
-                  onToggle={() => toggleTask(task.id)}
-                  onSkip={() => toggleSkip(task.id)}
+                  onToggle={() => toggleTask(task.slug)}
+                  onSkip={() => toggleSkip(task.slug)}
                 />
               );
             })}
