@@ -1,11 +1,9 @@
 'use client';
-import { useRef } from 'react';
-import { AppState, MiMundo } from '@/lib/types';
+import { useState, useEffect, useRef } from 'react';
+import { createBrowserClient } from '@/lib/supabase/client';
+import type { MiMundo } from '@/lib/types';
 
-interface Props {
-  state: AppState;
-  onChange: (s: AppState) => void;
-}
+interface Props { familyId: string }
 
 interface Prompt {
   key: keyof MiMundo;
@@ -75,22 +73,39 @@ const PROMPTS: Prompt[] = [
   },
 ];
 
-export default function MiMundoTab({ state, onChange }: Props) {
+const supabase = createBrowserClient();
+
+export default function MiMundoTab({ familyId }: Props) {
+  const [mundo, setMundo] = useState<MiMundo>({});
+  const [userId, setUserId] = useState<string | null>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+      const { data } = await supabase
+        .from('mi_mundo_entries').select('key, value')
+        .eq('family_id', familyId).eq('author_id', user.id);
+      const assembled: MiMundo = {};
+      for (const row of (data ?? [])) assembled[row.key as keyof MiMundo] = row.value;
+      setMundo(assembled);
+    }
+    load();
+  }, [familyId]);
+
   const handleChange = (key: keyof MiMundo, value: string) => {
-    const newState: AppState = {
-      ...state,
-      miMundo: { ...(state.miMundo ?? {}), [key]: value },
-    };
-    onChange(newState);
-
-    // Debounce per-field (save 1s after typing stops)
+    setMundo(prev => ({ ...prev, [key]: value }));
     if (timers.current[key]) clearTimeout(timers.current[key]);
-    timers.current[key] = setTimeout(() => {}, 1000);
+    timers.current[key] = setTimeout(async () => {
+      if (!userId) return;
+      await supabase.from('mi_mundo_entries').upsert(
+        { family_id: familyId, author_id: userId, key, value, updated_at: new Date().toISOString() },
+        { onConflict: 'family_id,author_id,key' },
+      );
+    }, 1000);
   };
-
-  const mundo = state.miMundo ?? {};
 
   return (
     <div>
