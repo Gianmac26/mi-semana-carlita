@@ -73,7 +73,7 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
 
       <div style={{ marginTop: 20 }}>
         {/* Tasks */}
-        {dayTasks.length > 0 && (
+        {dayTasks.length > 0 ? (
           <div style={{ marginBottom: 20 }}>
             <div style={{
               display: 'flex', alignItems: 'center',
@@ -109,7 +109,40 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
               );
             })}
           </div>
-        )}
+        ) : selectedDay !== 'sun' && (() => {
+          const hasWeekdayTasks = tasks.some(t => t.day_type === 'weekday');
+          const hasSaturdayTasks = tasks.some(t => t.day_type === 'saturday');
+          const hint = selectedDay === 'sat' && hasWeekdayTasks
+            ? 'Las tareas de lun–vie están en los otros días.'
+            : selectedDay !== 'sat' && hasSaturdayTasks
+            ? 'Las tareas del sábado están en ese día.'
+            : null;
+          return (
+            <div style={{
+              background: 'var(--bg-card)', borderRadius: 16,
+              border: '1.5px dashed var(--line)', padding: '20px 16px',
+              marginBottom: 20, textAlign: 'center',
+            }}>
+              <p style={{ color: 'var(--ink-soft)', fontSize: 14, margin: 0 }}>
+                📋 Sin tareas para este día.
+                {hint && <><br /><span style={{ fontSize: 13 }}>{hint}</span></>}
+              </p>
+              {selectedDay === 'sat' && hasWeekdayTasks && (
+                <button
+                  onClick={() => setSelectedDay('mon')}
+                  style={{
+                    marginTop: 10, padding: '7px 16px', borderRadius: 10,
+                    border: 'none', background: 'var(--pink)', color: '#fff',
+                    fontFamily: 'var(--font-title)', fontWeight: 700,
+                    fontSize: 13, cursor: 'pointer',
+                  }}
+                >
+                  Ver tareas del lunes
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {selectedDay === 'sun' && (
           <div style={{
