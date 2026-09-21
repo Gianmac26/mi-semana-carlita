@@ -33,9 +33,7 @@ export const DAY_LABELS: Record<DayKey, string> = {
 
 /** Returns the subset of tasks that apply to a given day. */
 export function getTasksForDayFromList(tasks: DbTask[], day: DayKey): DbTask[] {
-  if (day === 'sun') return [];
-  const type = day === 'sat' ? 'saturday' : 'weekday';
-  return tasks.filter(t => t.day_type === type && t.active);
+  return tasks.filter(t => t.active && t.days.includes(day));
 }
 
 /** Calculates completion % for one day given dynamic tasks from DB. */

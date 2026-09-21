@@ -110,13 +110,8 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
             })}
           </div>
         ) : selectedDay !== 'sun' && (() => {
-          const hasWeekdayTasks = tasks.some(t => t.day_type === 'weekday');
-          const hasSaturdayTasks = tasks.some(t => t.day_type === 'saturday');
-          const hint = selectedDay === 'sat' && hasWeekdayTasks
-            ? 'Las tareas de lun–vie están en los otros días.'
-            : selectedDay !== 'sat' && hasSaturdayTasks
-            ? 'Las tareas del sábado están en ese día.'
-            : null;
+          const otherDay = DAY_KEYS.filter(d => d !== selectedDay && d !== 'sun')
+            .find(d => getTasksForDayFromList(tasks, d).length > 0);
           return (
             <div style={{
               background: 'var(--bg-card)', borderRadius: 16,
@@ -125,11 +120,13 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
             }}>
               <p style={{ color: 'var(--ink-soft)', fontSize: 14, margin: 0 }}>
                 📋 Sin tareas para este día.
-                {hint && <><br /><span style={{ fontSize: 13 }}>{hint}</span></>}
+                {otherDay && (
+                  <><br /><span style={{ fontSize: 13 }}>Hay tareas en otros días de la semana.</span></>
+                )}
               </p>
-              {selectedDay === 'sat' && hasWeekdayTasks && (
+              {otherDay && (
                 <button
-                  onClick={() => setSelectedDay('mon')}
+                  onClick={() => setSelectedDay(otherDay)}
                   style={{
                     marginTop: 10, padding: '7px 16px', borderRadius: 10,
                     border: 'none', background: 'var(--pink)', color: '#fff',
@@ -137,7 +134,7 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
                     fontSize: 13, cursor: 'pointer',
                   }}
                 >
-                  Ver tareas del lunes
+                  Ver tareas del {DAY_LABELS[otherDay]}
                 </button>
               )}
             </div>

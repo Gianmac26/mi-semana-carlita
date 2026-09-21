@@ -51,7 +51,7 @@ export interface DbTask {
   id: string;
   family_id: string;
   slug: string;
-  day_type: 'weekday' | 'saturday';
+  days: string[];
   icon: string;
   label: string;
   time: string;

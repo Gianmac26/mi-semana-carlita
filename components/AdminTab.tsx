@@ -15,6 +15,11 @@ const supabase = createBrowserClient();
 
 const RESERVED_SLUGS = new Set(['ensayo', 'notes', 'skipped']);
 
+const ORDERED_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
+const DAY_LABEL: Record<string, string> = { mon: 'L', tue: 'M', wed: 'X', thu: 'J', fri: 'V', sat: 'S' };
+const DAY_FULL: Record<string, string>  = { mon: 'Lun', tue: 'Mar', wed: 'Mié', thu: 'Jue', fri: 'Vie', sat: 'Sáb' };
+const ICON_PRESETS = ['⭐', '📚', '🏃', '🍽️', '🚿', '📖', '🌙', '🏠', '🏫', '🎵', '💪', '🎯', '🎨', '🧹', '🐶'];
+
 function slugify(label: string): string {
   return label
     .toLowerCase()
@@ -48,7 +53,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, { displayName: string; answers: Record<string, string> }>>({});
-  const [newTask, setNewTask] = useState({ icon: '', label: '', time: '', day_type: 'weekday' as 'weekday' | 'saturday', skippable: false });
+  const [newTask, setNewTask] = useState({ icon: '⭐', label: '', time: '', days: ['mon','tue','wed','thu','fri'] as string[], skippable: false });
   const [saving, setSaving] = useState(false);
   const [taskError, setTaskError] = useState('');
   const updateTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -100,7 +105,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
   }
 
   async function addTask() {
-    if (!newTask.icon.trim() || !newTask.label.trim()) return;
+    if (!newTask.label.trim() || newTask.days.length === 0) return;
     const slug = slugify(newTask.label);
     if (RESERVED_SLUGS.has(slug)) {
       setTaskError('Ese nombre está reservado (ensayo, notas, saltado). Elige otro nombre.');
@@ -108,17 +113,19 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
     }
     setSaving(true);
     setTaskError('');
-    const maxOrder = tasks.filter(t => t.day_type === newTask.day_type).reduce((m, t) => Math.max(m, t.sort_order), -1);
+    const maxOrder = tasks.reduce((m, t) => Math.max(m, t.sort_order), -1);
+    const orderedDays = ORDERED_DAYS.filter(d => newTask.days.includes(d));
     const { data } = await supabase
       .from('tasks').insert({
-        family_id: familyId, slug, day_type: newTask.day_type,
-        icon: newTask.icon.trim(), label: newTask.label.trim(),
+        family_id: familyId, slug,
+        days: orderedDays,
+        icon: newTask.icon || '⭐', label: newTask.label.trim(),
         time: newTask.time.trim(), skippable: newTask.skippable,
         sort_order: maxOrder + 1, active: true,
       }).select().single();
     if (data) onTasksChange([...tasks, data as DbTask].sort((a, b) => a.sort_order - b.sort_order));
     else setTaskError('Error al guardar la tarea. Intenta de nuevo.');
-    setNewTask({ icon: '', label: '', time: '', day_type: 'weekday', skippable: false });
+    setNewTask({ icon: '⭐', label: '', time: '', days: ['mon','tue','wed','thu','fri'], skippable: false });
     setSaving(false);
   }
 
@@ -138,8 +145,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
     onTasksChange(tasks.filter(t => t.id !== id));
   }
 
-  const weekdayTasks = tasks.filter(t => t.day_type === 'weekday');
-  const saturdayTasks = tasks.filter(t => t.day_type === 'saturday');
+  const sortedTasks = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
 
   return (
     <div>
@@ -158,43 +164,116 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
 
       {section === 'tasks' && (
         <div>
-          {[{ label: 'Lun–Vie', list: weekdayTasks, type: 'weekday' as const }, { label: 'Sábado', list: saturdayTasks, type: 'saturday' as const }].map(({ label, list, type }) => (
-            <div key={type} style={{ marginBottom: 24 }}>
-              <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, color: 'var(--ink-soft)', marginBottom: 10 }}>{label}</h4>
-              {list.map(task => (
-                <div key={task.id} style={{ ...CARD, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <input value={task.icon} onChange={e => updateTask(task.id, { icon: e.target.value })} style={{ ...INPUT, width: 44, textAlign: 'center', fontSize: 18 }} />
-                  <input value={task.label} onChange={e => updateTask(task.id, { label: e.target.value })} style={{ ...INPUT, flex: 1, minWidth: 120 }} />
-                  <input value={task.time} onChange={e => updateTask(task.id, { time: e.target.value })} placeholder="hora" style={{ ...INPUT, width: 90 }} />
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--ink-soft)', cursor: 'pointer' }}>
-                    <input type="checkbox" checked={task.skippable} onChange={e => updateTask(task.id, { skippable: e.target.checked })} />
-                    Saltable
-                  </label>
-                  <button onClick={() => deleteTask(task.id)} style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', cursor: 'pointer', fontSize: 16, padding: 4 }}>🗑</button>
-                </div>
-              ))}
+          {sortedTasks.length === 0 && (
+            <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '12px 0 20px' }}>
+              No hay tareas aún. Agrega la primera abajo.
+            </p>
+          )}
+          {sortedTasks.map(task => (
+            <div key={task.id} style={{ ...CARD }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input value={task.icon} onChange={e => updateTask(task.id, { icon: e.target.value })}
+                  style={{ ...INPUT, width: 44, textAlign: 'center', fontSize: 18 }} />
+                <input value={task.label} onChange={e => updateTask(task.id, { label: e.target.value })}
+                  style={{ ...INPUT, flex: 1, minWidth: 120 }} />
+                <input value={task.time} onChange={e => updateTask(task.id, { time: e.target.value })}
+                  placeholder="hora" style={{ ...INPUT, width: 90 }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--ink-soft)', cursor: 'pointer' }}>
+                  <input type="checkbox" checked={task.skippable} onChange={e => updateTask(task.id, { skippable: e.target.checked })} />
+                  Saltable
+                </label>
+                <button onClick={() => deleteTask(task.id)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--ink-soft)', cursor: 'pointer', fontSize: 16, padding: 4 }}>🗑</button>
+              </div>
+              <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap' }}>
+                {ORDERED_DAYS.map(d => {
+                  const active = task.days.includes(d);
+                  return (
+                    <button key={d}
+                      onClick={() => {
+                        const next = active
+                          ? task.days.filter(x => x !== d)
+                          : ORDERED_DAYS.filter(x => task.days.includes(x) || x === d);
+                        updateTask(task.id, { days: next });
+                      }}
+                      style={{
+                        padding: '3px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                        fontFamily: 'var(--font-title)', cursor: 'pointer', border: 'none',
+                        background: active ? 'var(--pink)' : 'var(--line)',
+                        color: active ? '#fff' : 'var(--ink-soft)',
+                      }}
+                    >
+                      {DAY_LABEL[d]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ))}
+
+          {/* Nueva tarea */}
           <div style={{ background: 'var(--pink-soft)', borderRadius: 16, padding: 14, marginTop: 8 }}>
-            <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--pink)', marginBottom: 12 }}>Nueva tarea</h4>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
-              <input value={newTask.icon} onChange={e => setNewTask(p => ({ ...p, icon: e.target.value }))} placeholder="🌟" style={{ ...INPUT, width: 44, textAlign: 'center', fontSize: 18 }} />
-              <input value={newTask.label} onChange={e => setNewTask(p => ({ ...p, label: e.target.value }))} placeholder="Nombre de la tarea" style={{ ...INPUT, flex: 1, minWidth: 120 }} />
-              <input value={newTask.time} onChange={e => setNewTask(p => ({ ...p, time: e.target.value }))} placeholder="hora (ej: 8:00 pm)" style={{ ...INPUT, width: 120 }} />
+            <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--pink)', marginBottom: 10 }}>Nueva tarea</h4>
+
+            {/* Icono: presets + campo libre */}
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+                {ICON_PRESETS.map(ic => (
+                  <button key={ic} onClick={() => setNewTask(p => ({ ...p, icon: ic }))}
+                    style={{
+                      width: 34, height: 34, borderRadius: 8, border: `2px solid ${newTask.icon === ic ? 'var(--pink)' : 'transparent'}`,
+                      background: newTask.icon === ic ? 'var(--pink-soft)' : 'var(--bg-card)',
+                      fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>{ic}</button>
+                ))}
+              </div>
+              <input value={newTask.icon} onChange={e => setNewTask(p => ({ ...p, icon: e.target.value }))}
+                placeholder="o escribe un emoji" style={{ ...INPUT, width: 160, fontSize: 15 }} />
             </div>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)', cursor: 'pointer' }}>
-                <input type="radio" checked={newTask.day_type === 'weekday'} onChange={() => setNewTask(p => ({ ...p, day_type: 'weekday' }))} /> Lun–Vie
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)', cursor: 'pointer' }}>
-                <input type="radio" checked={newTask.day_type === 'saturday'} onChange={() => setNewTask(p => ({ ...p, day_type: 'saturday' }))} /> Sábado
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--ink-soft)', cursor: 'pointer' }}>
-                <input type="checkbox" checked={newTask.skippable} onChange={e => setNewTask(p => ({ ...p, skippable: e.target.checked }))} /> Saltable
-              </label>
+
+            {/* Nombre y hora */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+              <input value={newTask.label} onChange={e => setNewTask(p => ({ ...p, label: e.target.value }))}
+                placeholder="Nombre de la tarea" style={{ ...INPUT, flex: 1, minWidth: 150 }} />
+              <input value={newTask.time} onChange={e => setNewTask(p => ({ ...p, time: e.target.value }))}
+                placeholder="hora (ej: 8:00 pm)" style={{ ...INPUT, width: 130 }} />
             </div>
-            <button onClick={addTask} disabled={saving || !newTask.icon.trim() || !newTask.label.trim()}
-              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+
+            {/* Días */}
+            <div style={{ marginBottom: 10 }}>
+              <p style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600, margin: '0 0 6px' }}>¿Qué días aparece?</p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                {ORDERED_DAYS.map(d => {
+                  const active = newTask.days.includes(d);
+                  return (
+                    <button key={d}
+                      onClick={() => setNewTask(p => ({
+                        ...p,
+                        days: active ? p.days.filter(x => x !== d) : [...p.days, d],
+                      }))}
+                      style={{
+                        padding: '5px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                        fontFamily: 'var(--font-title)', cursor: 'pointer', border: 'none',
+                        background: active ? 'var(--pink)' : 'var(--bg-card)',
+                        color: active ? '#fff' : 'var(--ink-soft)',
+                      }}
+                    >
+                      {DAY_FULL[d]}
+                    </button>
+                  );
+                })}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--ink-soft)', cursor: 'pointer', marginLeft: 4 }}>
+                  <input type="checkbox" checked={newTask.skippable} onChange={e => setNewTask(p => ({ ...p, skippable: e.target.checked }))} />
+                  Saltable
+                </label>
+              </div>
+              {newTask.days.length === 0 && (
+                <p style={{ color: 'var(--error, #e53e3e)', fontSize: 12, marginTop: 4 }}>Selecciona al menos un día.</p>
+              )}
+            </div>
+
+            <button onClick={addTask} disabled={saving || !newTask.label.trim() || newTask.days.length === 0}
+              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: (saving || !newTask.label.trim() || newTask.days.length === 0) ? 0.6 : 1 }}>
               {saving ? 'Guardando...' : 'Agregar tarea'}
             </button>
             {taskError && <p style={{ color: 'var(--error, #e53e3e)', fontSize: 13, marginTop: 6 }}>{taskError}</p>}
