@@ -201,6 +201,11 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
             </div>
           )}
 
+          {sortedTasks.length > 0 && (
+            <p style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600, margin: '0 0 8px' }}>
+              Tareas activas ({sortedTasks.length})
+            </p>
+          )}
           {sortedTasks.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '12px 0 20px' }}>
               No hay tareas aún. Agrega la primera abajo.
