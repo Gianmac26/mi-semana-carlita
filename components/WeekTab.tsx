@@ -15,6 +15,8 @@ interface Props {
   onChange: (weekKey: string, day: string, dayState: DayState) => void;
 }
 
+const DAY_LABELS: Record<string, string> = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' };
+
 const INPUT: React.CSSProperties = {
   width: '100%', padding: '9px 11px', borderRadius: 10,
   border: '1.5px solid var(--line)', background: 'var(--bg-card)',
