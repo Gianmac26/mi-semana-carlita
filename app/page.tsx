@@ -30,12 +30,15 @@ export default function Home() {
   const [tasks,       setTasks]       = useState<DbTask[]>([]);
   const [weeks,       setWeeks]       = useState<AppState['weeks']>({});
   const [saveStatus,  setSaveStatus]  = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [tab,         setTab]         = useState<Tab>('week');
-  const [codeInput,   setCodeInput]   = useState('');
-  const [codeError,   setCodeError]   = useState('');
-  const [codeLoading, setCodeLoading] = useState(false);
-  const [displayName, setDisplayName] = useState('');
-  const [creating,    setCreating]    = useState(false);
+  const [tab,              setTab]              = useState<Tab>('week');
+  const [codeInput,        setCodeInput]        = useState('');
+  const [codeError,        setCodeError]        = useState('');
+  const [codeLoading,      setCodeLoading]      = useState(false);
+  const [displayName,      setDisplayName]      = useState('');
+  const [creating,         setCreating]         = useState(false);
+  const [childrenProfiles, setChildrenProfiles] = useState<Profile[]>([]);
+  const [selectedChildId,  setSelectedChildId]  = useState<string | null>(null);
+  const [allChildrenWeeks, setAllChildrenWeeks] = useState<Record<string, AppState['weeks']>>({});
 
   useEffect(() => {
     async function init() {
@@ -53,18 +56,45 @@ export default function Home() {
 
   async function loadAppData(p: Profile) {
     setProfile(p);
-    const [{ data: taskRows }, { data: weekRows }] = await Promise.all([
-      supabase.from('tasks').select('*').eq('family_id', p.family_id).eq('active', true).order('sort_order'),
-      supabase.from('weekly_state').select('*').eq('family_id', p.family_id),
-    ]);
+    const { data: taskRows } = await supabase
+      .from('tasks').select('*').eq('family_id', p.family_id).eq('active', true).order('sort_order');
     setTasks((taskRows as DbTask[]) ?? []);
-    const assembled: AppState['weeks'] = {};
-    for (const row of (weekRows ?? [])) {
-      if (!assembled[row.week_key]) assembled[row.week_key] = {};
-      assembled[row.week_key][row.day] = row.state;
+
+    if (p.role === 'padre') {
+      const [{ data: hijoRows }, { data: weekRows }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('family_id', p.family_id).eq('role', 'hijo'),
+        supabase.from('weekly_state').select('*').eq('family_id', p.family_id),
+      ]);
+      const hijos = (hijoRows as Profile[]) ?? [];
+      setChildrenProfiles(hijos);
+
+      const allWeeks: Record<string, AppState['weeks']> = {};
+      for (const row of (weekRows ?? [])) {
+        if (!allWeeks[row.user_id]) allWeeks[row.user_id] = {};
+        if (!allWeeks[row.user_id][row.week_key]) allWeeks[row.user_id][row.week_key] = {};
+        allWeeks[row.user_id][row.week_key][row.day] = row.state;
+      }
+      setAllChildrenWeeks(allWeeks);
+
+      const firstChildId = hijos.length > 0 ? hijos[0].id : null;
+      setSelectedChildId(firstChildId);
+      setWeeks(firstChildId ? (allWeeks[firstChildId] ?? {}) : {});
+    } else {
+      const { data: weekRows } = await supabase
+        .from('weekly_state').select('*').eq('family_id', p.family_id).eq('user_id', p.id);
+      const assembled: AppState['weeks'] = {};
+      for (const row of (weekRows ?? [])) {
+        if (!assembled[row.week_key]) assembled[row.week_key] = {};
+        assembled[row.week_key][row.day] = row.state;
+      }
+      setWeeks(assembled);
     }
-    setWeeks(assembled);
     setPageState('ready');
+  }
+
+  function handleSelectChild(childId: string) {
+    setSelectedChildId(childId);
+    setWeeks(allChildrenWeeks[childId] ?? {});
   }
 
   async function handleCreateFamily() {
@@ -105,7 +135,7 @@ export default function Home() {
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleWeeksChange = useCallback((weekKey: string, day: string, dayState: DayState) => {
-    if (!profile) return;
+    if (!profile || profile.role === 'padre') return;
     setWeeks(prev => ({
       ...prev,
       [weekKey]: { ...(prev[weekKey] ?? {}), [day]: dayState },
@@ -113,15 +143,15 @@ export default function Home() {
     setSaveStatus('saving');
     if (saveTimerRef.current)  clearTimeout(saveTimerRef.current);
     if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-    const upsert = { family_id: profile.family_id, week_key: weekKey, day, state: dayState };
+    const upsert = { family_id: profile.family_id, week_key: weekKey, day, state: dayState, user_id: profile.id };
     saveTimerRef.current = setTimeout(async () => {
       const { error } = await supabase
-        .from('weekly_state').upsert(upsert, { onConflict: 'family_id,week_key,day' });
+        .from('weekly_state').upsert(upsert, { onConflict: 'family_id,week_key,day,user_id' });
       if (error) {
         setSaveStatus('error');
         retryTimerRef.current = setTimeout(async () => {
           const { error: e2 } = await supabase
-            .from('weekly_state').upsert(upsert, { onConflict: 'family_id,week_key,day' });
+            .from('weekly_state').upsert(upsert, { onConflict: 'family_id,week_key,day,user_id' });
           setSaveStatus(e2 ? 'error' : 'saved');
         }, 2000);
       } else {
@@ -209,7 +239,16 @@ export default function Home() {
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'articles' && <ArticlesTab />}
         {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
-        {tab === 'admin'    && isAdmin && profile && <AdminTab familyId={profile.family_id} tasks={tasks} onTasksChange={setTasks} />}
+        {tab === 'admin'    && isAdmin && profile && (
+          <AdminTab
+            familyId={profile.family_id}
+            tasks={tasks}
+            onTasksChange={setTasks}
+            childrenProfiles={childrenProfiles}
+            selectedChildId={selectedChildId}
+            onSelectChild={handleSelectChild}
+          />
+        )}
       </div>
     </>
   );

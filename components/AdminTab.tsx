@@ -1,12 +1,15 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { DbTask, InviteCode, MiMundo } from '@/lib/types';
+import type { DbTask, InviteCode, MiMundo, Profile } from '@/lib/types';
 
 interface Props {
   familyId: string;
   tasks: DbTask[];
   onTasksChange: (tasks: DbTask[]) => void;
+  childrenProfiles: Profile[];
+  selectedChildId: string | null;
+  onSelectChild: (id: string) => void;
 }
 
 type Section = 'tasks' | 'invites' | 'mundo';
@@ -56,7 +59,7 @@ const MundoPrompts = [
   { key: 'pedido',   title: '💌 Le pediría a mis papás...' },
 ];
 
-export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
+export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfiles, selectedChildId, onSelectChild }: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, { displayName: string; answers: Record<string, string> }>>({});
@@ -171,6 +174,33 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
 
       {section === 'tasks' && (
         <div>
+          {/* Selector de hijo — visible cuando hay más de un hijo o para contexto */}
+          {childrenProfiles.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600, margin: '0 0 6px' }}>
+                Vista de semana para:
+              </p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {childrenProfiles.map(child => (
+                  <button
+                    key={child.id}
+                    onClick={() => onSelectChild(child.id)}
+                    style={{
+                      padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700,
+                      fontFamily: 'var(--font-title)', cursor: 'pointer',
+                      border: `1.5px solid ${selectedChildId === child.id ? 'var(--pink)' : 'var(--line)'}`,
+                      background: selectedChildId === child.id ? 'var(--pink)' : 'var(--bg-card)',
+                      color: selectedChildId === child.id ? '#fff' : 'var(--ink-soft)',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {child.display_name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {sortedTasks.length === 0 && (
             <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '12px 0 20px' }}>
               No hay tareas aún. Agrega la primera abajo.
