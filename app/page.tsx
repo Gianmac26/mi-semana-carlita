@@ -11,6 +11,7 @@ import MiMundoTab from '@/components/MiMundoTab';
 import AdminTab from '@/components/AdminTab';
 import ThemeToggle from '@/components/ThemeToggle';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
+import HelpButton from '@/components/HelpButton';
 
 type PageState = 'loading' | 'no-profile-first' | 'no-profile-code' | 'ready';
 type Tab = 'week' | 'progress' | 'events' | 'articles' | 'mundo' | 'admin';
@@ -281,6 +282,9 @@ export default function Home() {
           onSelect={(key) => setTab(key as Tab)}
         />
       </div>
+
+      {/* HelpButton — always visible, above bottom nav */}
+      <HelpButton />
     </>
   );
 }
