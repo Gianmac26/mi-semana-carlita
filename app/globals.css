@@ -75,3 +75,24 @@ body {
 button { font-family: inherit; cursor: pointer; }
 input, textarea, select { font-family: inherit; }
 textarea { resize: vertical; }
+
+/* ── Responsive layout: top nav vs bottom nav ──────────────────────────── */
+.top-nav-wrapper { display: flex; }
+.bottom-nav-outer { display: none; }
+
+@media (max-width: 767px) {
+  .top-nav-wrapper { display: none; }
+  .bottom-nav-outer { display: block; }
+
+  /* Evitar que el contenido quede tapado por la bottom nav */
+  .main-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+/* Inputs a 16 px mínimo en móvil para evitar auto-zoom en iOS */
+@media (max-width: 767px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}

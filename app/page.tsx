@@ -10,6 +10,7 @@ import ArticlesTab from '@/components/ArticlesTab';
 import MiMundoTab from '@/components/MiMundoTab';
 import AdminTab from '@/components/AdminTab';
 import ThemeToggle from '@/components/ThemeToggle';
+import BottomNav, { type NavItem } from '@/components/BottomNav';
 
 type PageState = 'loading' | 'no-profile-first' | 'no-profile-code' | 'ready';
 type Tab = 'week' | 'progress' | 'events' | 'articles' | 'mundo' | 'admin';
@@ -211,10 +212,27 @@ export default function Home() {
   const isAdmin = profile?.role === 'padre';
   const TABS = isAdmin ? [...BASE_TABS, { key: 'admin' as Tab, label: '⚙️ Admin' }] : BASE_TABS;
 
+  const HIJO_NAV: NavItem[] = [
+    { key: 'week',     icon: '📅', label: 'Semana'   },
+    { key: 'mundo',    icon: '💜', label: 'Mi mundo'  },
+    { key: 'articles', icon: '💡', label: 'Bienestar' },
+    { key: 'progress', icon: '📊', label: 'Logros'    },
+    { key: 'events',   icon: '🎈', label: 'Eventos'   },
+  ];
+  const PADRE_NAV: NavItem[] = [
+    { key: 'admin',    icon: '⚙️', label: 'Admin'     },
+    { key: 'week',     icon: '📅', label: 'Semana'    },
+    { key: 'mundo',    icon: '💜', label: 'Mi mundo'  },
+    { key: 'progress', icon: '📊', label: 'Logros'    },
+    { key: 'events',   icon: '🎈', label: 'Eventos'   },
+    { key: 'articles', icon: '💡', label: 'Bienestar' },
+  ];
+  const navItems = isAdmin ? PADRE_NAV : HIJO_NAV;
+
   return (
     <>
       <StatusIndicator status={saveStatus} />
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px' }}>
+      <div className="main-content" style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px' }}>
         <header style={{ display: 'flex', alignItems: 'center', padding: '20px 0 16px', gap: 12 }}>
           <div style={{ flex: 1 }}>
             <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 30, color: 'var(--pink)', letterSpacing: 1 }}>MI SEMANA</h1>
@@ -226,13 +244,17 @@ export default function Home() {
             Salir
           </button>
         </header>
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 0 8px', marginBottom: 16, scrollbarWidth: 'none' }}>
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 20, background: tab === t.key ? 'var(--pink)' : 'var(--bg-card)', color: tab === t.key ? '#fff' : 'var(--ink-soft)', border: tab === t.key ? '1.5px solid var(--pink)' : '1.5px solid var(--line)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-              {t.label}
-            </button>
-          ))}
+
+        {/* Top nav — desktop only (hidden on mobile via .top-nav-wrapper CSS class) */}
+        <div className="top-nav-wrapper">
+          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 0 8px', marginBottom: 16, scrollbarWidth: 'none' }}>
+            {TABS.map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 20, background: tab === t.key ? 'var(--pink)' : 'var(--bg-card)', color: tab === t.key ? '#fff' : 'var(--ink-soft)', border: tab === t.key ? '1.5px solid var(--pink)' : '1.5px solid var(--line)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
         {tab === 'week'     && <WeekTab weeks={weeks} tasks={tasks} onChange={handleWeeksChange} />}
         {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} />}
@@ -249,6 +271,15 @@ export default function Home() {
             onSelectChild={handleSelectChild}
           />
         )}
+      </div>
+
+      {/* Bottom nav — mobile only (shown via .bottom-nav-outer CSS class) */}
+      <div className="bottom-nav-outer">
+        <BottomNav
+          items={navItems}
+          active={tab}
+          onSelect={(key) => setTab(key as Tab)}
+        />
       </div>
     </>
   );
