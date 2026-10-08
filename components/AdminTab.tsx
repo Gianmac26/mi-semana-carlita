@@ -20,6 +20,13 @@ const DAY_LABEL: Record<string, string> = { mon: 'L', tue: 'M', wed: 'X', thu: '
 const DAY_FULL: Record<string, string>  = { mon: 'Lun', tue: 'Mar', wed: 'Mié', thu: 'Jue', fri: 'Vie', sat: 'Sáb' };
 const ICON_PRESETS = ['⭐', '📚', '🏃', '🍽️', '🚿', '📖', '🌙', '🏠', '🏫', '🎵', '💪', '🎯', '🎨', '🧹', '🐶'];
 
+const TIME_OPTIONS = ['', ...Array.from({ length: (22 - 6) * 2 + 1 }, (_, i) => {
+  const mins = 6 * 60 + i * 30;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+})];
+
 function slugify(label: string): string {
   return label
     .toLowerCase()
@@ -176,8 +183,12 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
                   style={{ ...INPUT, width: 44, textAlign: 'center', fontSize: 18 }} />
                 <input value={task.label} onChange={e => updateTask(task.id, { label: e.target.value })}
                   style={{ ...INPUT, flex: 1, minWidth: 120 }} />
-                <input value={task.time} onChange={e => updateTask(task.id, { time: e.target.value })}
-                  placeholder="hora" style={{ ...INPUT, width: 90 }} />
+                <select value={task.time} onChange={e => updateTask(task.id, { time: e.target.value })}
+                  style={{ ...INPUT, width: 100 }}>
+                  {TIME_OPTIONS.map(t => (
+                    <option key={t} value={t}>{t || '— sin hora —'}</option>
+                  ))}
+                </select>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--ink-soft)', cursor: 'pointer' }}>
                   <input type="checkbox" checked={task.skippable} onChange={e => updateTask(task.id, { skippable: e.target.checked })} />
                   Saltable
@@ -235,8 +246,12 @@ export default function AdminTab({ familyId, tasks, onTasksChange }: Props) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
               <input value={newTask.label} onChange={e => setNewTask(p => ({ ...p, label: e.target.value }))}
                 placeholder="Nombre de la tarea" style={{ ...INPUT, flex: 1, minWidth: 150 }} />
-              <input value={newTask.time} onChange={e => setNewTask(p => ({ ...p, time: e.target.value }))}
-                placeholder="hora (ej: 8:00 pm)" style={{ ...INPUT, width: 130 }} />
+              <select value={newTask.time} onChange={e => setNewTask(p => ({ ...p, time: e.target.value }))}
+                style={{ ...INPUT, width: 130 }}>
+                {TIME_OPTIONS.map(t => (
+                  <option key={t} value={t}>{t || '— sin hora —'}</option>
+                ))}
+              </select>
             </div>
 
             {/* Días */}
