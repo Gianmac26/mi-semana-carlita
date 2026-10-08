@@ -19,8 +19,27 @@ set user_id = (
   limit 1
 );
 
--- 3. Eliminar filas huérfanas (familia sin hijo registrado todavía)
-delete from weekly_state where user_id is null;
+-- 3. Guard: abortar si quedan filas sin user_id.
+--    Precondición: registra el perfil del hijo vía código de invitación y vuelve a correr.
+--    Si ACEPTAS PERDER esas filas (datos de prueba), comenta el DO $$ y descomenta el DELETE.
+do $$
+declare
+  _orphan_count int;
+begin
+  select count(*) into _orphan_count
+  from weekly_state
+  where user_id is null;
+
+  if _orphan_count > 0 then
+    raise exception
+      'MIGRACIÓN ABORTADA: % fila(s) de weekly_state no tienen hijo registrado. '
+      'Registra el perfil del hijo vía código de invitación y vuelve a correr.',
+      _orphan_count;
+  end if;
+end $$;
+
+-- DELETE explícito de huérfanas — DESCOMENTA SOLO si aceptas perder esas filas:
+-- delete from weekly_state where user_id is null;
 
 -- 4. Hacer NOT NULL después del backfill
 alter table weekly_state alter column user_id set not null;
@@ -51,7 +70,6 @@ drop policy if exists "family members can read weekly state"  on weekly_state;
 drop policy if exists "family members can insert weekly state" on weekly_state;
 drop policy if exists "family members can update weekly state" on weekly_state;
 
--- SELECT: padre ve todo su familia; hijo solo sus propias filas
 create policy "weekly_state select"
   on weekly_state for select
   using (
@@ -59,7 +77,6 @@ create policy "weekly_state select"
     and (auth_role() = 'padre' or user_id = auth.uid())
   );
 
--- INSERT: solo hijo inserta, y únicamente para sí mismo
 create policy "weekly_state insert"
   on weekly_state for insert
   with check (
@@ -68,8 +85,11 @@ create policy "weekly_state insert"
     and auth_role() = 'hijo'
   );
 
--- UPDATE: cada usuario solo actualiza sus propias filas
 create policy "weekly_state update"
   on weekly_state for update
   using  (family_id = auth_family_id() and user_id = auth.uid())
   with check (family_id = auth_family_id() and user_id = auth.uid());
+
+-- 8. Índice de performance para queries por usuario
+create index if not exists weekly_state_user_week_idx
+  on weekly_state (user_id, week_key);

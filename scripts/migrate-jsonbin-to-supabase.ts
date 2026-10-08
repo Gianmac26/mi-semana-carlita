@@ -1,3 +1,6 @@
+// @deprecated — Script one-time ya ejecutado. NO correr de nuevo:
+// weekly_state ahora requiere user_id en el onConflict (post-migración 003).
+// Correrlo contra la DB actual fallará con constraint error.
 import { createClient } from '@supabase/supabase-js';
 
 const {
