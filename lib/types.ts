@@ -25,6 +25,20 @@ export interface MiMundo {
   pedido?: string;      // Si pudiera pedirle algo a mis papás
 }
 
+export interface MiMundoEntry {
+  id: string;
+  family_id: string;
+  author_id: string;
+  key: string;
+  value: string;
+  week_key: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Respuestas agrupadas por key, ordenadas por week_key DESC
+export type MiMundoHistory = Record<string, MiMundoEntry[]>;
+
 export interface AppState {
   weeks: { [weekKey: string]: WeekData };
   events: AppEvent[];

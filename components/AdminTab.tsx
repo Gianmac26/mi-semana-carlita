@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { DbTask, InviteCode, MiMundo, Profile } from '@/lib/types';
+import type { DbTask, InviteCode, MiMundoEntry, MiMundoHistory, Profile } from '@/lib/types';
 
 interface Props {
   familyId: string;
@@ -29,6 +29,11 @@ const TIME_OPTIONS = ['', ...Array.from({ length: (22 - 6) * 2 + 1 }, (_, i) => 
   const m = mins % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 })];
+
+function formatWeekAdmin(weekKey: string): string {
+  const d = new Date(weekKey + 'T12:00:00Z');
+  return 'Semana del ' + new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short' }).format(d);
+}
 
 function slugify(label: string): string {
   return label
@@ -62,7 +67,8 @@ const MundoPrompts = [
 export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfiles, selectedChildId, onSelectChild }: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
-  const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, { displayName: string; answers: Record<string, string> }>>({});
+  const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, { displayName: string; history: MiMundoHistory }>>({});
+  const [expandedAdminMundo, setExpandedAdminMundo] = useState<Set<string>>(new Set());
   const [newTask, setNewTask] = useState({ icon: '⭐', label: '', time: '', days: ['mon','tue','wed','thu','fri'] as string[], skippable: false });
   const [saving, setSaving] = useState(false);
   const [taskError, setTaskError] = useState('');
@@ -85,18 +91,22 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
 
   async function loadMundo() {
     const { data: entries } = await supabase
-      .from('mi_mundo_entries').select('key, value, author_id').eq('family_id', familyId);
-    if (!entries || entries.length === 0) { setMundoByAuthor({}); return; }
+      .from('mi_mundo_entries')
+      .select('id, family_id, author_id, key, value, week_key, created_at, updated_at')
+      .eq('family_id', familyId)
+      .order('week_key', { ascending: false });
+    if (!entries?.length) { setMundoByAuthor({}); return; }
     const authorIds = [...new Set(entries.map(e => e.author_id as string))];
     const { data: profiles } = await supabase
       .from('profiles').select('id, display_name').in('id', authorIds);
     const nameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name as string]));
-    const grouped: Record<string, { displayName: string; answers: Record<string, string> }> = {};
+    const grouped: Record<string, { displayName: string; history: MiMundoHistory }> = {};
     for (const row of entries) {
-      if (!grouped[row.author_id]) {
-        grouped[row.author_id] = { displayName: nameMap[row.author_id] ?? 'Hijo/a', answers: {} };
-      }
-      grouped[row.author_id].answers[row.key] = row.value;
+      if (!grouped[row.author_id])
+        grouped[row.author_id] = { displayName: nameMap[row.author_id] ?? 'Hijo/a', history: {} };
+      const h = grouped[row.author_id].history;
+      if (!h[row.key]) h[row.key] = [];
+      h[row.key].push(row as MiMundoEntry);
     }
     setMundoByAuthor(grouped);
   }
@@ -364,21 +374,54 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
             <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '20px 0' }}>
               Tu hijo/a todavía no ha escrito nada.
             </p>
-          ) : Object.values(mundoByAuthor).map(({ displayName, answers }) => (
-            <div key={displayName} style={{ marginBottom: 24 }}>
+          ) : Object.entries(mundoByAuthor).map(([authorId, { displayName, history }]) => (
+            <div key={authorId} style={{ marginBottom: 24 }}>
               {Object.keys(mundoByAuthor).length > 1 && (
                 <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
                   {displayName}
                 </h4>
               )}
-              {MundoPrompts.map(p => (
-                <div key={p.key} style={{ ...CARD }}>
-                  <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-soft)', marginBottom: 6 }}>{p.title}</div>
-                  <div style={{ fontSize: 14, color: answers[p.key] ? 'var(--ink)' : 'var(--ink-soft)', fontStyle: answers[p.key] ? 'normal' : 'italic' }}>
-                    {answers[p.key] || '(sin responder todavía)'}
+              {MundoPrompts.map(p => {
+                const entries = history[p.key] ?? [];
+                const latest  = entries[0];
+                const combo   = `${authorId}__${p.key}`;
+                const isOpen  = expandedAdminMundo.has(combo);
+                return (
+                  <div key={p.key} style={{ ...CARD }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-soft)', marginBottom: 6 }}>{p.title}</div>
+                    {!latest ? (
+                      <div style={{ fontSize: 14, color: 'var(--ink-soft)', fontStyle: 'italic' }}>(sin responder todavía)</div>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 600, marginBottom: 3 }}>
+                          {formatWeekAdmin(latest.week_key)}
+                        </div>
+                        <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>{latest.value}</div>
+                        {entries.length > 1 && (
+                          <button
+                            onClick={() => setExpandedAdminMundo(prev => {
+                              const s = new Set(prev); s.has(combo) ? s.delete(combo) : s.add(combo); return s;
+                            })}
+                            style={{ marginTop: 8, background: 'none', border: 'none', color: 'var(--ink-soft)', fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                          >
+                            {isOpen ? '▲ Ocultar anteriores' : `▼ Ver histórico (${entries.length - 1} más)`}
+                          </button>
+                        )}
+                        {isOpen && (
+                          <div style={{ marginTop: 10, borderTop: '1px solid var(--line)', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            {entries.slice(1).map(e => (
+                              <div key={e.id} style={{ borderRadius: 8, background: 'var(--bg)', padding: '6px 10px' }}>
+                                <div style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 600, marginBottom: 2 }}>{formatWeekAdmin(e.week_key)}</div>
+                                <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.55 }}>{e.value}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ))}
         </div>

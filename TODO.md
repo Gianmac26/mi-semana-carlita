@@ -19,7 +19,7 @@
 
 - [ ] `user_preferences_update` policy: agregar `WITH CHECK (user_id = auth.uid())` (actualmente solo tiene `USING`)
 - [ ] `create_user_preferences()`: agregar `SET search_path = public, pg_temp` (consistencia con otras funciones `SECURITY DEFINER`)
-- [ ] `ThemeToggle`: mover `createBrowserClient()` a `useState(() => createBrowserClient())` para lazy init real (actualmente en `useRef` que igual crea el cliente en render)
+- [ ] `ThemeToggle`, `ThemePicker`, `AvatarPicker`: cambiar `useRef(createBrowserClient())` → `useState(() => createBrowserClient())` para lazy init real (ya aplicado en MiMundoTab en Fase 6)
 
 ## Deuda técnica — Módulo 0A Fase 5 (contraste)
 
@@ -34,3 +34,11 @@
 - [ ] Revisar si hay otras features residuales del uso personal:
       - Cualquier campo en DayState que no sea notes/skipped/taskId
       - Cualquier sección en AdminTab con slug reservado
+
+## UX gaps
+- [ ] Pantallas no-profile-first y no-profile-code sin botón "Salir". Un usuario atrapado ahí no puede cambiar de cuenta sin limpiar cookies. Fix sugerido: botón "Salir" discreto arriba a la derecha.
+
+## Mi mundo — deuda futura
+- [ ] Considerar permitir que el hijo borre respuestas de más de N semanas.
+- [ ] Considerar un modo de "solo lectura" para que el hijo vea su histórico antiguo como un diario.
+- [ ] El padre ve el histórico completo hoy. Si se vuelve privado en el futuro, agregar toggle por familia.
