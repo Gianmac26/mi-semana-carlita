@@ -35,14 +35,14 @@ const BASE = 'gian.marcal26@gmail.com';
 const alias = (tag: string) => BASE.replace('@', `+${tag}@`);
 
 const TASKS = [
-  { slug: 'ir_al_colegio',    icon: '🏫', label: 'Ir al colegio',              time: '07:00', days: ['lun','mar','mie','jue','vie'],             skippable: false, sort_order: 0 },
-  { slug: 'hacer_tarea',      icon: '📝', label: 'Hacer la tarea del colegio', time: '16:00', days: ['lun','mar','mie','jue'],                   skippable: false, sort_order: 1 },
-  { slug: 'leer_20min',       icon: '📖', label: 'Leer 20 minutos',             time: '17:00', days: ['lun','mar','mie','jue','vie'],             skippable: false, sort_order: 2 },
-  { slug: 'ordenar_cuarto',   icon: '🧹', label: 'Ordenar mi cuarto',           time: '18:00', days: ['lun','mie','vie'],                        skippable: false, sort_order: 3 },
-  { slug: 'practicar_ingles', icon: '🗣️', label: 'Practicar inglés',            time: '17:30', days: ['lun','mie','vie'],                        skippable: true,  sort_order: 4 },
-  { slug: 'ayudar_en_casa',   icon: '🏠', label: 'Ayudar en casa',              time: '10:00', days: ['sab'],                                    skippable: false, sort_order: 5 },
-  { slug: 'deporte',          icon: '⚽', label: 'Hacer deporte',               time: '09:00', days: ['mar','jue','sab'],                        skippable: false, sort_order: 6 },
-  { slug: 'dormir_temprano',  icon: '🌙', label: 'Apagar el celular y dormir',  time: '22:00', days: ['lun','mar','mie','jue','vie','sab','dom'], skippable: false, sort_order: 7 },
+  { slug: 'ir_al_colegio',    icon: '🏫', label: 'Ir al colegio',              time: '07:00', days: ['mon','tue','wed','thu','fri'],             skippable: false, sort_order: 0 },
+  { slug: 'hacer_tarea',      icon: '📝', label: 'Hacer la tarea del colegio', time: '16:00', days: ['mon','tue','wed','thu'],                   skippable: false, sort_order: 1 },
+  { slug: 'leer_20min',       icon: '📖', label: 'Leer 20 minutos',             time: '17:00', days: ['mon','tue','wed','thu','fri'],             skippable: false, sort_order: 2 },
+  { slug: 'ordenar_cuarto',   icon: '🧹', label: 'Ordenar mi cuarto',           time: '18:00', days: ['mon','wed','fri'],                        skippable: false, sort_order: 3 },
+  { slug: 'practicar_ingles', icon: '🗣️', label: 'Practicar inglés',            time: '17:30', days: ['mon','wed','fri'],                        skippable: true,  sort_order: 4 },
+  { slug: 'ayudar_en_casa',   icon: '🏠', label: 'Ayudar en casa',              time: '10:00', days: ['sat'],                                    skippable: false, sort_order: 5 },
+  { slug: 'deporte',          icon: '⚽', label: 'Hacer deporte',               time: '09:00', days: ['tue','thu','sat'],                        skippable: false, sort_order: 6 },
+  { slug: 'dormir_temprano',  icon: '🌙', label: 'Apagar el celular y dormir',  time: '22:00', days: ['mon','tue','wed','thu','fri','sat','sun'], skippable: false, sort_order: 7 },
 ];
 
 function daysFromNow(n: number): string {

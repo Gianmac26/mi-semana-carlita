@@ -41,3 +41,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Claude worktrees
+.claude/
+
+# Supabase exports
+Supabase Snippet*.csv
+
+# Documentos de análisis local
+Analisis*.md
