@@ -1,19 +1,54 @@
 'use client';
+import { useState } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const supabase = createBrowserClient();
+  const [showEmail, setShowEmail] = useState(false);
+  const [email, setEmail]       = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError]       = useState('');
+  const [loading, setLoading]   = useState(false);
+
   const handleGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
   };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (err) {
+      setError(
+        err.message.toLowerCase().includes('invalid') && err.message.toLowerCase().includes('credentials')
+          ? 'Email o contraseña incorrectos'
+          : 'Error al iniciar sesión. Intenta de nuevo.'
+      );
+      return;
+    }
+    window.location.href = '/';
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', boxSizing: 'border-box',
+    padding: '14px 16px', borderRadius: 12,
+    border: '1.5px solid var(--line)', background: 'var(--bg-card)',
+    color: 'var(--ink)', fontFamily: 'var(--font-body)',
+    fontSize: 16, marginBottom: 12, outline: 'none',
+  };
+
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', padding:'0 24px', background:'var(--bg)' }}>
       <div style={{ width:'100%', maxWidth:380, textAlign:'center' }}>
         <h1 style={{ fontFamily:'var(--font-title)', fontWeight:700, fontSize:32, color:'var(--pink)', letterSpacing:1, marginBottom:8 }}>MI SEMANA</h1>
         <p style={{ fontFamily:'var(--font-body)', color:'var(--ink-soft)', fontSize:15, marginBottom:40 }}>Tu espacio familiar ✨</p>
+
+        {/* Botón principal: Google */}
         <button onClick={handleGoogle} style={{ width:'100%', padding:'14px 20px', borderRadius:14, border:'1.5px solid var(--line)', background:'var(--bg-card)', color:'var(--ink)', fontFamily:'var(--font-title)', fontWeight:600, fontSize:16, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:10 }}>
           <svg width="20" height="20" viewBox="0 0 48 48">
             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -23,6 +58,50 @@ export default function LoginPage() {
           </svg>
           Continuar con Google
         </button>
+
+        {/* Toggle formulario email */}
+        <button
+          onClick={() => { setShowEmail(v => !v); setError(''); }}
+          style={{ marginTop:20, background:'none', border:'none', color:'var(--ink-soft)', fontFamily:'var(--font-body)', fontSize:14, cursor:'pointer', textDecoration:'underline', padding:'8px 0', minHeight:48 }}
+        >
+          {showEmail ? 'Cancelar' : 'Entrar con email'}
+        </button>
+
+        {/* Formulario email + password */}
+        {showEmail && (
+          <form onSubmit={handleEmailLogin} style={{ marginTop:8, textAlign:'left' }}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              style={inputStyle}
+            />
+            <input
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
+              style={inputStyle}
+            />
+            {error && (
+              <p style={{ color:'#e53e3e', fontFamily:'var(--font-body)', fontSize:14, marginBottom:12, textAlign:'center' }}>
+                {error}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{ width:'100%', minHeight:48, padding:'14px 20px', borderRadius:14, border:'none', background:'var(--pink)', color:'#fff', fontFamily:'var(--font-title)', fontWeight:600, fontSize:16, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? 'Entrando…' : 'Entrar con email'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
