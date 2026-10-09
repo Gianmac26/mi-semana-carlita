@@ -1,6 +1,6 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { AppState, DayState, EnsayoState } from '@/lib/types';
+import { useState } from 'react';
+import { AppState, DayState } from '@/lib/types';
 import type { DbTask } from '@/lib/types';
 import { DAY_KEYS, DayKey, getTasksForDayFromList, getDayCompletion } from '@/lib/tasks';
 import { getMondayOfWeek, formatWeekKey, getTodayDayKey } from '@/lib/utils';
@@ -13,6 +13,7 @@ interface Props {
   weeks: AppState['weeks'];
   tasks: DbTask[];
   onChange: (weekKey: string, day: string, dayState: DayState) => void;
+  childDisplayName?: string;
 }
 
 const DAY_LABELS: Record<string, string> = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' };
@@ -24,15 +25,13 @@ const INPUT: React.CSSProperties = {
   outline: 'none',
 };
 
-export default function WeekTab({ weeks, tasks, onChange }: Props) {
+export default function WeekTab({ weeks, tasks, onChange, childDisplayName }: Props) {
   const todayKey = getTodayDayKey();
   const [monday, setMonday] = useState<Date>(() => getMondayOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState<DayKey>(() => {
     const t = getTodayDayKey();
     return (DAY_KEYS.includes(t as DayKey) ? t : 'mon') as DayKey;
   });
-  const [showEnsayo, setShowEnsayo] = useState<boolean>(false);
-  useEffect(() => { setShowEnsayo(false); }, [selectedDay]);
 
   const weekKey  = formatWeekKey(monday);
   const weekData = weeks[weekKey] ?? {};
@@ -40,9 +39,6 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
   const dayTasks = getTasksForDayFromList(tasks, selectedDay);
   const pct      = getDayCompletion(dayState as Record<string, unknown>, dayTasks);
   const isWeekday = !['sat', 'sun'].includes(selectedDay);
-
-  const ensayo = (dayState.ensayo ?? { start: '', end: '' }) as EnsayoState;
-  const hasEnsayoData = !!(ensayo.start || ensayo.end);
 
   const updateDay = (patch: Partial<DayState>) => {
     onChange(weekKey, selectedDay, { ...dayState, ...patch } as DayState);
@@ -57,10 +53,9 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
 
   const handleNotes = (val: string) => updateDay({ notes: val });
 
-  const handleEnsayo = (field: 'start' | 'end', val: string) => {
-    const prev = (dayState.ensayo ?? { start: '', end: '' }) as EnsayoState;
-    updateDay({ ensayo: { ...prev, [field]: val } });
-  };
+  const notesHeader = childDisplayName
+    ? `¿Qué estudió ${childDisplayName} hoy?`
+    : '¿Qué estudió hoy?';
 
   return (
     <div>
@@ -148,63 +143,8 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
             textAlign: 'center', padding: '32px 0',
             color: 'var(--ink-soft)', fontStyle: 'italic', fontSize: 15,
           }}>
-            🌴 Domingo libre — ¡descansa, Carlita!
+            🌴 Domingo libre — ¡descansa!
           </div>
-        )}
-
-        {/* Ensayo — visible only when data exists or user opens it */}
-        {(hasEnsayoData || showEnsayo) ? (
-          <div style={{
-            background: 'var(--teal-soft)', borderRadius: 18,
-            padding: 16, marginBottom: 12,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <h3 style={{
-                fontFamily: 'var(--font-title)', fontWeight: 700,
-                fontSize: 16, color: 'var(--teal)', margin: 0,
-              }}>
-                🎭 Ensayo con Elvis
-              </h3>
-              {!hasEnsayoData && (
-                <button
-                  onClick={() => setShowEnsayo(false)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-soft)', fontSize: 18, lineHeight: 1, padding: 2 }}
-                  title="Cerrar"
-                >×</button>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 12 }}>
-              {(['start', 'end'] as const).map(f => (
-                <div key={f} style={{ flex: 1 }}>
-                  <label style={{
-                    fontSize: 12, color: 'var(--ink-soft)',
-                    fontWeight: 600, display: 'block', marginBottom: 4,
-                  }}>
-                    {f === 'start' ? 'Inicio' : 'Término'}
-                  </label>
-                  <input
-                    type="time"
-                    value={ensayo[f]}
-                    onChange={e => handleEnsayo(f, e.target.value)}
-                    style={INPUT}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setShowEnsayo(true)}
-            style={{
-              width: '100%', padding: '10px 14px', marginBottom: 12,
-              background: 'var(--teal-soft)', borderRadius: 18,
-              border: '1.5px dashed var(--teal)', cursor: 'pointer',
-              color: 'var(--teal)', fontFamily: 'var(--font-title)',
-              fontWeight: 600, fontSize: 14, textAlign: 'left',
-            }}
-          >
-            🎭 Registrar ensayo con Elvis
-          </button>
         )}
 
         {/* Notes — weekdays only */}
@@ -217,7 +157,7 @@ export default function WeekTab({ weeks, tasks, onChange }: Props) {
               fontFamily: 'var(--font-title)', fontWeight: 700,
               fontSize: 16, color: 'var(--yellow)', marginBottom: 10,
             }}>
-              📝 ¿Qué estudió Carlita hoy?
+              📝 {notesHeader}
             </h3>
             <textarea
               value={(dayState.notes as string) ?? ''}

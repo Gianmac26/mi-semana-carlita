@@ -261,7 +261,13 @@ export default function Home() {
             ))}
           </div>
         </div>
-        {tab === 'week'     && <WeekTab weeks={weeks} tasks={tasks} onChange={handleWeeksChange} />}
+        {tab === 'week'     && <WeekTab weeks={weeks} tasks={tasks} onChange={handleWeeksChange}
+          childDisplayName={
+            profile?.role === 'hijo'
+              ? profile.display_name
+              : childrenProfiles.find(c => c.id === selectedChildId)?.display_name
+          }
+        />}
         {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} />}
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'articles' && <ArticlesTab />}

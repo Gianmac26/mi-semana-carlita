@@ -1,13 +1,7 @@
-export interface EnsayoState {
-  start: string;
-  end: string;
-}
-
 export interface DayState {
   notes?: string;
-  ensayo?: EnsayoState;
   skipped?: Record<string, boolean>;
-  [taskId: string]: boolean | string | EnsayoState | Record<string, boolean> | undefined;
+  [taskId: string]: boolean | string | Record<string, boolean> | undefined;
 }
 
 export interface WeekData {

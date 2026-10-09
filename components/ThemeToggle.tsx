@@ -13,17 +13,21 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>('auto');
   const [open, setOpen]   = useState(false);
 
-  // Load saved preference
+  // Load saved preference — migra la key 'carlita-theme' → 'mi-semana-theme' si existe
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('carlita-theme') as Theme | null;
+      if (!localStorage.getItem('mi-semana-theme') && localStorage.getItem('carlita-theme')) {
+        localStorage.setItem('mi-semana-theme', localStorage.getItem('carlita-theme')!);
+        localStorage.removeItem('carlita-theme');
+      }
+      const saved = localStorage.getItem('mi-semana-theme') as Theme | null;
       if (saved) apply(saved);
     } catch {}
   }, []);
 
   function apply(t: Theme) {
     setTheme(t);
-    try { localStorage.setItem('carlita-theme', t); } catch {}
+    try { localStorage.setItem('mi-semana-theme', t); } catch {}
     if (t === 'auto') {
       document.documentElement.removeAttribute('data-theme');
     } else {

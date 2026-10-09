@@ -16,7 +16,7 @@ type Section = 'tasks' | 'invites' | 'mundo';
 
 const supabase = createBrowserClient();
 
-const RESERVED_SLUGS = new Set(['ensayo', 'notes', 'skipped']);
+const RESERVED_SLUGS = new Set(['notes', 'skipped']);
 
 const ORDERED_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
 const DAY_LABEL: Record<string, string> = { mon: 'L', tue: 'M', wed: 'X', thu: 'J', fri: 'V', sat: 'S' };
@@ -118,7 +118,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
     if (!newTask.label.trim() || newTask.days.length === 0) return;
     const slug = slugify(newTask.label);
     if (RESERVED_SLUGS.has(slug)) {
-      setTaskError('Ese nombre está reservado (ensayo, notas, saltado). Elige otro nombre.');
+      setTaskError('Ese nombre está reservado (notas, saltado). Elige otro nombre.');
       return;
     }
     setSaving(true);

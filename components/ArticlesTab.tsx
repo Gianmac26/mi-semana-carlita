@@ -57,7 +57,7 @@ const ARTICLES: Article[] = [
         <p>La ciencia es clara: los adolescentes necesitan entre <em>8 y 10 horas</em> por noche. No es un capricho — es lo que tu cuerpo en desarrollo requiere para funcionar bien. Acostarte a las 10 pm y levantarte a las 6 am te da exactamente 8 horas. Cada hora que le robas a tu sueño viendo el celular, la pagas al día siguiente con tu energía, tu concentración y tu humor.</p>
 
         <p style={{ fontWeight: 700, marginTop: 8, borderTop: '1.5px solid var(--line)', paddingTop: 12 }}>
-          💜 La enseñanza: dormir bien no es flojera — es inteligencia. Cada vez que respetas tu hora de dormir, le estás regalando a la Carlita de mañana más energía, mejor memoria y un cuerpo que crece sano. El celular puede esperar. Tu sueño no.
+          💜 La enseñanza: dormir bien no es flojera — es inteligencia. Cada vez que respetas tu hora de dormir, te estás regalando a ti mism@ más energía, mejor memoria y un cuerpo que crece sano. El celular puede esperar. Tu sueño no.
         </p>
       </>
     ),
@@ -112,7 +112,7 @@ const ARTICLES: Article[] = [
         <h4>🎯 Cómo hacerlo sin que se sienta pesado</h4>
         <p>No tienes que estudiar horas. Con 30–45 minutos diarios enfocados — sin celular, sin series de fondo — es más que suficiente para que el material se quede. Cuando llegue el examen, no estarás repasando desde cero. Solo estarás refrescando lo que ya sabes. Esa diferencia se nota en la nota.</p>
 
-        <p style={{ fontWeight: 700, marginTop: 8 }}>Cada vez que estudias hoy, le estás regalando tranquilidad a la Carlita del día del examen. 🌟</p>
+        <p style={{ fontWeight: 700, marginTop: 8 }}>Cada vez que estudias hoy, te estás regalando tranquilidad el día del examen. 🌟</p>
       </>
     ),
   },
