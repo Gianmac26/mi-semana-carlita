@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+client_secret*.json
+scripts/seed-demo.credentials.txt
 
 # debug
 npm-debug.log*
