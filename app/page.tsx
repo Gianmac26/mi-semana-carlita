@@ -293,7 +293,7 @@ export default function Home() {
             <p style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-soft)', fontSize: 14, marginTop: 2 }}>{profile?.display_name}</p>
           </div>
           <ThemeToggle userId={profile?.id} />
-          <button onClick={handleSignOut}
+          <button onClick={handleSignOut} className="btn-salir"
             style={{ padding: '7px 12px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--bg-card)', color: 'var(--ink-soft)', fontFamily: 'var(--font-body)', fontSize: 12, cursor: 'pointer' }}>
             Salir
           </button>

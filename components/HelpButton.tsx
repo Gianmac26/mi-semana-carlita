@@ -368,7 +368,7 @@ export default function HelpButton() {
           background: 'var(--lilac)',
           color: 'var(--on-accent)',
           border: 'none',
-          boxShadow: '0 4px 18px rgba(155,107,242,0.45)',
+          boxShadow: '0 4px 18px color-mix(in srgb, var(--lilac) 45%, transparent)',
           fontSize: 22,
           cursor: 'pointer',
           zIndex: 90,

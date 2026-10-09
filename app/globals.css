@@ -160,7 +160,7 @@
   --line: #E8DFF5;
   --ok: #2FBE7A;
   --ok-soft: #E1F7ED;
-  --on-accent: #fff;
+  --on-accent: #2B2140;
   --error: #e53e3e;
   --error-soft: #FBEAEA;
 }
@@ -235,7 +235,7 @@
     --line: #3D1A08;
     --ok: #66BB6A;
     --ok-soft: #1A3020;
-    --on-accent: #fff;
+    --on-accent: #1A0D07;
     --error: #EF9A9A;
     --error-soft: #3D1010;
   }
@@ -345,7 +345,7 @@
     --line: #3A2E4D;
     --ok: #57D999;
     --ok-soft: #1B3327;
-    --on-accent: #fff;
+    --on-accent: #1C1626;
     --error: #fc8181;
     --error-soft: #3D2020;
   }
@@ -367,7 +367,7 @@
     --line: #0E2040;
     --ok: #66BB6A;
     --ok-soft: #0A2010;
-    --on-accent: #fff;
+    --on-accent: #060E1F;
     --error: #EF9A9A;
     --error-soft: #3D1010;
   }
@@ -418,7 +418,7 @@
   --line: #3D1A08;
   --ok: #66BB6A;
   --ok-soft: #1A3020;
-  --on-accent: #fff;
+  --on-accent: #1A0D07;
   --error: #EF9A9A;
   --error-soft: #3D1010;
 }
@@ -528,7 +528,7 @@
   --line: #3A2E4D;
   --ok: #57D999;
   --ok-soft: #1B3327;
-  --on-accent: #fff;
+  --on-accent: #1C1626;
   --error: #fc8181;
   --error-soft: #3D2020;
 }
@@ -550,7 +550,7 @@
   --line: #0E2040;
   --ok: #66BB6A;
   --ok-soft: #0A2010;
-  --on-accent: #fff;
+  --on-accent: #060E1F;
   --error: #EF9A9A;
   --error-soft: #3D1010;
 }
@@ -618,4 +618,11 @@ textarea { resize: vertical; }
   input, textarea, select {
     font-size: 16px !important;
   }
+}
+
+/* Header compacto en pantallas muy pequeñas (320px–360px) */
+@media (max-width: 360px) {
+  h1 { font-size: 22px !important; letter-spacing: 0 !important; }
+  .btn-salir { padding: 7px 8px !important; font-size: 0 !important; }
+  .btn-salir::after { content: '×'; font-size: 18px; }
 }

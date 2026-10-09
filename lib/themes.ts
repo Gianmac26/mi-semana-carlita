@@ -74,7 +74,7 @@ export const PALETTES: Palette[] = [
       lilac: '#BA68C8',     'lilac-soft': '#2D0F40',
       line: '#3D1A08',
       ok: '#66BB6A',        'ok-soft': '#1A3020',
-      'on-accent': '#fff',  error: '#EF9A9A',  'error-soft': '#3D1010',
+      'on-accent': '#1A0D07', error: '#EF9A9A',  'error-soft': '#3D1010',
     },
   },
   {
@@ -199,7 +199,7 @@ export const PALETTES: Palette[] = [
       lilac: '#9B6BF2',     'lilac-soft': '#EDE4FB',
       line: '#E8DFF5',
       ok: '#2FBE7A',        'ok-soft': '#E1F7ED',
-      'on-accent': '#fff',  error: '#e53e3e',  'error-soft': '#FBEAEA',
+      'on-accent': '#2B2140', error: '#e53e3e',  'error-soft': '#FBEAEA',
     },
     dark: {
       bg: '#1C1626',        'bg-card': '#251C33',
@@ -210,7 +210,7 @@ export const PALETTES: Palette[] = [
       lilac: '#C39BFF',     'lilac-soft': '#382A4D',
       line: '#3A2E4D',
       ok: '#57D999',        'ok-soft': '#1B3327',
-      'on-accent': '#fff',  error: '#fc8181',  'error-soft': '#3D2020',
+      'on-accent': '#1C1626', error: '#fc8181',  'error-soft': '#3D2020',
     },
   },
   {
@@ -237,7 +237,7 @@ export const PALETTES: Palette[] = [
       lilac: '#9575CD',     'lilac-soft': '#1A0A40',
       line: '#0E2040',
       ok: '#66BB6A',        'ok-soft': '#0A2010',
-      'on-accent': '#fff',  error: '#EF9A9A',  'error-soft': '#3D1010',
+      'on-accent': '#060E1F', error: '#EF9A9A',  'error-soft': '#3D1010',
     },
   },
   {
