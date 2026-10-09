@@ -166,7 +166,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
       <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
         {([['tasks', '📋 Tareas'], ['invites', '🔑 Invitaciones'], ['mundo', '💜 Mi mundo']] as [Section, string][]).map(([key, label]) => (
           <button key={key} onClick={() => setSection(key)}
-            style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--pink)' : 'var(--line)'}`, background: section === key ? 'var(--pink)' : 'var(--bg-card)', color: section === key ? '#fff' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--pink)' : 'var(--line)'}`, background: section === key ? 'var(--pink)' : 'var(--bg-card)', color: section === key ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
             {label}
           </button>
         ))}
@@ -190,7 +190,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                       fontFamily: 'var(--font-title)', cursor: 'pointer',
                       border: `1.5px solid ${selectedChildId === child.id ? 'var(--pink)' : 'var(--line)'}`,
                       background: selectedChildId === child.id ? 'var(--pink)' : 'var(--bg-card)',
-                      color: selectedChildId === child.id ? '#fff' : 'var(--ink-soft)',
+                      color: selectedChildId === child.id ? 'var(--on-accent)' : 'var(--ink-soft)',
                       transition: 'all 0.15s',
                     }}
                   >
@@ -246,7 +246,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                         padding: '3px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700,
                         fontFamily: 'var(--font-title)', cursor: 'pointer', border: 'none',
                         background: active ? 'var(--pink)' : 'var(--line)',
-                        color: active ? '#fff' : 'var(--ink-soft)',
+                        color: active ? 'var(--on-accent)' : 'var(--ink-soft)',
                       }}
                     >
                       {DAY_LABEL[d]}
@@ -305,7 +305,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                         padding: '5px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700,
                         fontFamily: 'var(--font-title)', cursor: 'pointer', border: 'none',
                         background: active ? 'var(--pink)' : 'var(--bg-card)',
-                        color: active ? '#fff' : 'var(--ink-soft)',
+                        color: active ? 'var(--on-accent)' : 'var(--ink-soft)',
                       }}
                     >
                       {DAY_FULL[d]}
@@ -318,15 +318,15 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                 </label>
               </div>
               {newTask.days.length === 0 && (
-                <p style={{ color: 'var(--error, #e53e3e)', fontSize: 12, marginTop: 4 }}>Selecciona al menos un día.</p>
+                <p style={{ color: 'var(--error)', fontSize: 12, marginTop: 4 }}>Selecciona al menos un día.</p>
               )}
             </div>
 
             <button onClick={addTask} disabled={saving || !newTask.label.trim() || newTask.days.length === 0}
-              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: (saving || !newTask.label.trim() || newTask.days.length === 0) ? 0.6 : 1 }}>
+              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: (saving || !newTask.label.trim() || newTask.days.length === 0) ? 0.6 : 1 }}>
               {saving ? 'Guardando...' : 'Agregar tarea'}
             </button>
-            {taskError && <p style={{ color: 'var(--error, #e53e3e)', fontSize: 13, marginTop: 6 }}>{taskError}</p>}
+            {taskError && <p style={{ color: 'var(--error)', fontSize: 13, marginTop: 6 }}>{taskError}</p>}
           </div>
         </div>
       )}
@@ -334,7 +334,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
       {section === 'invites' && (
         <div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            <button onClick={() => generateCode('hijo')} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+            <button onClick={() => generateCode('hijo')} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--pink)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
               + Código para hijo/a
             </button>
             <button onClick={() => generateCode('padre')} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1.5px solid var(--pink)', background: 'var(--pink-soft)', color: 'var(--pink)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>

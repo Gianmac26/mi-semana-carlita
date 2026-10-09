@@ -31,7 +31,7 @@ export default function DayChips({ weekData, tasks, selected, onSelect, todayKey
             style={{
               flexShrink: 0,
               background: isSel ? 'var(--pink)' : isToday ? 'var(--pink-soft)' : 'var(--bg-card)',
-              color: isSel ? '#fff' : isToday ? 'var(--pink)' : 'var(--ink-soft)',
+              color: isSel ? 'var(--on-accent)' : isToday ? 'var(--pink)' : 'var(--ink-soft)',
               border: isToday && !isSel ? '2px solid var(--pink)' : '2px solid var(--line)',
               borderRadius: 12, padding: '8px 12px',
               fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 14,

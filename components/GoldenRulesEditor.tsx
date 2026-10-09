@@ -150,11 +150,11 @@ export default function GoldenRulesEditor({ familyId, rules, onRulesChange }: Pr
             onKeyDown={e => e.key === 'Enter' && addRule()}
             placeholder="Texto de la regla" style={{ ...INPUT, flex: 1, minWidth: 0 }} />
           <button onClick={addRule} disabled={saving || !newText.trim()}
-            style={{ padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--lilac)', color: '#fff', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: saving || !newText.trim() ? 'not-allowed' : 'pointer', opacity: saving || !newText.trim() ? 0.6 : 1, flexShrink: 0 }}>
+            style={{ padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--lilac)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: saving || !newText.trim() ? 'not-allowed' : 'pointer', opacity: saving || !newText.trim() ? 0.6 : 1, flexShrink: 0 }}>
             {saving ? '...' : '+ Agregar'}
           </button>
         </div>
-        {error && <p style={{ color: '#e53e3e', fontSize: 12, marginTop: 6 }}>{error}</p>}
+        {error && <p style={{ color: 'var(--error)', fontSize: 12, marginTop: 6 }}>{error}</p>}
       </div>
     </div>
   );

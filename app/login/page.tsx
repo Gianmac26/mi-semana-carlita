@@ -89,14 +89,14 @@ export default function LoginPage() {
               style={inputStyle}
             />
             {error && (
-              <p style={{ color:'#e53e3e', fontFamily:'var(--font-body)', fontSize:14, marginBottom:12, textAlign:'center' }}>
+              <p style={{ color:'var(--error)', fontFamily:'var(--font-body)', fontSize:14, marginBottom:12, textAlign:'center' }}>
                 {error}
               </p>
             )}
             <button
               type="submit"
               disabled={loading}
-              style={{ width:'100%', minHeight:48, padding:'14px 20px', borderRadius:14, border:'none', background:'var(--pink)', color:'#fff', fontFamily:'var(--font-title)', fontWeight:600, fontSize:16, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+              style={{ width:'100%', minHeight:48, padding:'14px 20px', borderRadius:14, border:'none', background:'var(--pink)', color:'var(--on-accent)', fontFamily:'var(--font-title)', fontWeight:600, fontSize:16, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
             >
               {loading ? 'Entrando…' : 'Entrar con email'}
             </button>

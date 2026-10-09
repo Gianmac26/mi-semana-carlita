@@ -69,7 +69,7 @@ export default function EventsTab({ familyId, role }: Props) {
               placeholder="Ej: Cumpleaños de Sofi 🎂" style={INPUT} />
           </div>
           <button onClick={addEvent} disabled={!canAdd}
-            style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', background: canAdd ? 'var(--pink)' : 'var(--line)', color: canAdd ? '#fff' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: canAdd ? 'pointer' : 'not-allowed', transition: 'all 0.15s' }}>
+            style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', background: canAdd ? 'var(--pink)' : 'var(--line)', color: canAdd ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: canAdd ? 'pointer' : 'not-allowed', transition: 'all 0.15s' }}>
             Agregar evento
           </button>
         </div>

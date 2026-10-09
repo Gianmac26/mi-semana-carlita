@@ -182,7 +182,7 @@ function BreathingGuide({ onStop }: { onStop: () => void }) {
             <div key={i} style={{
               padding: '4px 12px', borderRadius: 20,
               background: i === phaseIdx ? circleColor : 'var(--line)',
-              color: i === phaseIdx ? '#fff' : 'var(--ink-soft)',
+              color: i === phaseIdx ? 'var(--on-accent)' : 'var(--ink-soft)',
               fontSize: 11, fontFamily: 'var(--font-title)', fontWeight: 700,
               transition: 'all 0.3s',
             }}>
@@ -198,7 +198,7 @@ function BreathingGuide({ onStop }: { onStop: () => void }) {
             onClick={handleStart}
             style={{
               padding: '14px 32px', borderRadius: 16, border: 'none',
-              background: 'var(--teal)', color: '#fff',
+              background: 'var(--teal)', color: 'var(--on-accent)',
               fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 16,
               cursor: 'pointer', minHeight: 52, minWidth: 160,
             }}
@@ -278,7 +278,7 @@ function HelplineCard({ line }: { line: Helpline }) {
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               minHeight: 52, padding: '12px 16px', borderRadius: 14,
-              background: line.color, color: '#fff', textDecoration: 'none',
+              background: line.color, color: 'var(--on-accent)', textDecoration: 'none',
               fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 16,
             }}
           >
@@ -366,7 +366,7 @@ export default function HelpButton() {
           width: 56, height: 56,
           borderRadius: '50%',
           background: 'var(--lilac)',
-          color: '#fff',
+          color: 'var(--on-accent)',
           border: 'none',
           boxShadow: '0 4px 18px rgba(155,107,242,0.45)',
           fontSize: 22,

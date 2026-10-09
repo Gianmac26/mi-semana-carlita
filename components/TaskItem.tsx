@@ -36,7 +36,7 @@ export default function TaskItem({ task, checked, skipped, onToggle, onSkip }: P
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           transition: 'all 0.15s',
         }}>
-          {checked && !skipped && <span style={{ color: '#fff', fontSize: 16, lineHeight: 1 }}>✓</span>}
+          {checked && !skipped && <span style={{ color: 'var(--on-accent)', fontSize: 16, lineHeight: 1 }}>✓</span>}
         </div>
 
         <span style={{ fontSize: 20, lineHeight: 1 }}>{task.icon}</span>
