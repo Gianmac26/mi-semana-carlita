@@ -50,8 +50,8 @@ export default function Home() {
         .from('profiles').select('*').eq('id', user.id).maybeSingle();
       if (profileRow) { await loadAppData(profileRow as Profile); return; }
       const res = await fetch('/api/onboard');
-      const { isFirstUser } = await res.json();
-      setPageState(isFirstUser ? 'no-profile-first' : 'no-profile-code');
+      const { hasProfile } = await res.json();
+      setPageState(hasProfile ? 'ready' : 'no-profile-first');
     }
     init();
   }, []);
@@ -178,13 +178,17 @@ export default function Home() {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
         <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--pink)', fontSize: 22, marginBottom: 8 }}>¡Bienvenid@! 🎉</h2>
-        <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginBottom: 24 }}>Eres la primera persona en entrar. ¿Cuál es tu nombre?</p>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginBottom: 24 }}>Crea tu familia ingresando tu nombre.</p>
         <input value={displayName} onChange={e => setDisplayName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleCreateFamily()} placeholder="Tu nombre"
           style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--bg-card)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 15, outline: 'none', marginBottom: 12, boxSizing: 'border-box' }} />
         <button onClick={handleCreateFamily} disabled={!displayName.trim() || creating}
           style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
           {creating ? 'Creando...' : 'Entrar como papá/mamá'}
+        </button>
+        <button onClick={() => setPageState('no-profile-code')}
+          style={{ width: '100%', marginTop: 12, padding: '11px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'transparent', color: 'var(--ink-soft)', fontFamily: 'var(--font-body)', fontSize: 14, cursor: 'pointer' }}>
+          Tengo un código de invitación
         </button>
       </div>
     </div>
