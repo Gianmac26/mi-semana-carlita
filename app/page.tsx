@@ -15,6 +15,7 @@ import GoldenRules from '@/components/GoldenRules';
 import GoldenRulesEditor, { type FamilyRule } from '@/components/GoldenRulesEditor';
 import ThemeToggle from '@/components/ThemeToggle';
 import ThemePicker from '@/components/ThemePicker';
+import AvatarPicker from '@/components/AvatarPicker';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
 
@@ -27,7 +28,7 @@ const BASE_TABS: { key: Tab; label: string }[] = [
   { key: 'events',   label: '🎈 Eventos' },
   { key: 'articles', label: '📚 Para ti' },
   { key: 'mundo',    label: '💜 Mi mundo' },
-  { key: 'tema',     label: '🎨 Paleta' },
+  { key: 'tema',     label: '🎨 Personalizar' },
 ];
 
 const supabase = createBrowserClient();
@@ -48,6 +49,7 @@ export default function Home() {
   const [selectedChildId,  setSelectedChildId]  = useState<string | null>(null);
   const [allChildrenWeeks, setAllChildrenWeeks] = useState<Record<string, AppState['weeks']>>({});
   const [familyRules,      setFamilyRules]      = useState<FamilyRule[]>([]);
+  const [avatarEmoji,      setAvatarEmoji]      = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -83,9 +85,12 @@ export default function Home() {
     } else {
       document.documentElement.setAttribute('data-mode', themeMode);
     }
+    const avatar = prefs?.avatar_url ?? null;
+    setAvatarEmoji(avatar);
     try {
       localStorage.setItem('mi-semana-palette', palette);
       localStorage.setItem('mi-semana-mode', themeMode);
+      if (avatar) localStorage.setItem('mi-semana-avatar', avatar);
     } catch { /* storage unavailable */ }
 
     if (p.role === 'padre') {
@@ -249,7 +254,7 @@ export default function Home() {
     { key: 'articles', icon: '💡', label: 'Bienestar' },
     { key: 'progress', icon: '📊', label: 'Logros'    },
     { key: 'events',   icon: '🎈', label: 'Eventos'   },
-    { key: 'tema',     icon: '🎨', label: 'Paleta'    },
+    { key: 'tema',     icon: '🎨', label: 'Personalizar' },
   ];
   const PADRE_NAV: NavItem[] = [
     { key: 'admin',    icon: '⚙️', label: 'Admin'     },
@@ -258,7 +263,7 @@ export default function Home() {
     { key: 'progress', icon: '📊', label: 'Logros'    },
     { key: 'events',   icon: '🎈', label: 'Eventos'   },
     { key: 'articles', icon: '💡', label: 'Bienestar' },
-    { key: 'tema',     icon: '🎨', label: 'Paleta'    },
+    { key: 'tema',     icon: '🎨', label: 'Personalizar' },
   ];
   const navItems = isAdmin ? PADRE_NAV : HIJO_NAV;
 
@@ -267,9 +272,25 @@ export default function Home() {
       <StatusIndicator status={saveStatus} />
       <div className="main-content" style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px' }}>
         <header style={{ display: 'flex', alignItems: 'center', padding: '20px 0 16px', gap: 12 }}>
+          {/* Avatar bubble — tappable, navega a Perfil */}
+          <button
+            onClick={() => setTab('tema')}
+            title="Cambiar avatar o paleta"
+            aria-label="Cambiar avatar o paleta"
+            style={{
+              width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
+              background: 'var(--accent-soft)', border: '2px solid var(--accent)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: avatarEmoji ? 26 : 18, cursor: 'pointer',
+              color: 'var(--accent)', fontFamily: 'var(--font-title)', fontWeight: 700,
+              padding: 0,
+            }}
+          >
+            {avatarEmoji ?? (profile?.display_name?.[0]?.toUpperCase() ?? '?')}
+          </button>
           <div style={{ flex: 1 }}>
             <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 30, color: 'var(--accent)', letterSpacing: 1 }}>MI SEMANA</h1>
-            <p style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-soft)', fontSize: 14, marginTop: 2 }}>{profile?.display_name} ✨</p>
+            <p style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-soft)', fontSize: 14, marginTop: 2 }}>{profile?.display_name}</p>
           </div>
           <ThemeToggle userId={profile?.id} />
           <button onClick={handleSignOut}
@@ -305,7 +326,17 @@ export default function Home() {
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'articles' && <ArticlesTab />}
         {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
-        {tab === 'tema'     && profile && <ThemePicker userId={profile.id} />}
+        {tab === 'tema' && profile && (
+          <>
+            <AvatarPicker
+              userId={profile.id}
+              initialAvatar={avatarEmoji}
+              onAvatarChange={setAvatarEmoji}
+            />
+            <div style={{ height: 1, background: 'var(--line)', margin: '28px 0' }} />
+            <ThemePicker userId={profile.id} />
+          </>
+        )}
         {tab === 'admin'    && isAdmin && profile && (
           <AdminTab
             familyId={profile.family_id}
