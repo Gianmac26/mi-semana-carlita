@@ -1,7 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { Profile, DbTask, AppState, DayState } from '@/lib/types';
+import type { Profile, DbTask, AppState, DayState, UserPreferences } from '@/lib/types';
+import type { PaletteId, ThemeMode } from '@/lib/themes';
+import { ROLE_DEFAULT_PALETTE, DEFAULT_PALETTE } from '@/lib/themes';
 import StatusIndicator from '@/components/StatusIndicator';
 import WeekTab from '@/components/WeekTab';
 import ProgressTab from '@/components/ProgressTab';
@@ -61,12 +63,28 @@ export default function Home() {
 
   async function loadAppData(p: Profile) {
     setProfile(p);
-    const [{ data: taskRows }, { data: ruleRows }] = await Promise.all([
+    const [{ data: taskRows }, { data: ruleRows }, { data: prefsRow }] = await Promise.all([
       supabase.from('tasks').select('*').eq('family_id', p.family_id).eq('active', true).order('sort_order'),
       supabase.from('family_rules').select('*').eq('family_id', p.family_id).eq('active', true).order('sort_order'),
+      supabase.from('user_preferences').select('*').eq('user_id', p.id).maybeSingle(),
     ]);
     setTasks((taskRows as DbTask[]) ?? []);
     setFamilyRules((ruleRows as FamilyRule[]) ?? []);
+
+    // Apply palette + mode from Supabase (falls back to role default for new users)
+    const prefs = prefsRow as UserPreferences | null;
+    const palette = (prefs?.theme_palette ?? ROLE_DEFAULT_PALETTE[p.role] ?? DEFAULT_PALETTE) as PaletteId;
+    const themeMode = (prefs?.theme_mode ?? 'auto') as ThemeMode;
+    document.documentElement.setAttribute('data-palette', palette);
+    if (themeMode === 'auto') {
+      document.documentElement.removeAttribute('data-mode');
+    } else {
+      document.documentElement.setAttribute('data-mode', themeMode);
+    }
+    try {
+      localStorage.setItem('mi-semana-palette', palette);
+      localStorage.setItem('mi-semana-mode', themeMode);
+    } catch { /* storage unavailable */ }
 
     if (p.role === 'padre') {
       const [{ data: hijoRows }, { data: weekRows }] = await Promise.all([
@@ -249,7 +267,7 @@ export default function Home() {
             <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 30, color: 'var(--accent)', letterSpacing: 1 }}>MI SEMANA</h1>
             <p style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-soft)', fontSize: 14, marginTop: 2 }}>{profile?.display_name} ✨</p>
           </div>
-          <ThemeToggle />
+          <ThemeToggle userId={profile?.id} />
           <button onClick={handleSignOut}
             style={{ padding: '7px 12px', borderRadius: 10, border: '1.5px solid var(--line)', background: 'var(--bg-card)', color: 'var(--ink-soft)', fontFamily: 'var(--font-body)', fontSize: 12, cursor: 'pointer' }}>
             Salir

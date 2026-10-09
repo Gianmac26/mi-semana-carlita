@@ -62,3 +62,12 @@ export interface InviteCode {
   expires_at: string;
   used_by: string | null;
 }
+
+export interface UserPreferences {
+  user_id: string;
+  theme_palette: string;
+  theme_mode: 'light' | 'dark' | 'auto';
+  avatar_url: string | null;
+  avatar_type: 'preset' | 'photo';
+  updated_at: string;
+}

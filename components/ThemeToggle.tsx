@@ -1,7 +1,8 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ThemeMode } from '@/lib/themes';
 import { DEFAULT_PALETTE } from '@/lib/themes';
+import { createBrowserClient } from '@/lib/supabase/client';
 
 const OPTIONS: { value: ThemeMode; icon: string; label: string }[] = [
   { value: 'light', icon: '☀️', label: 'Claro' },
@@ -24,9 +25,11 @@ function applyPalette(paletteId: string) {
   document.documentElement.setAttribute('data-palette', paletteId);
 }
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ userId }: { userId?: string }) {
   const [mode, setMode] = useState<ThemeMode>('auto');
   const [open, setOpen] = useState(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const supabaseRef = useRef(createBrowserClient());
 
   useEffect(() => {
     try {
@@ -56,6 +59,20 @@ export default function ThemeToggle() {
     setMode(m);
     try { localStorage.setItem(MODE_KEY, m); } catch {}
     applyMode(m);
+
+    if (userId) {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(async () => {
+        try {
+          // Si el usuario no tiene profile (admin_global), la FK rechaza el upsert. Ignoramos.
+          // TODO: migrar user_preferences.user_id a references auth.users(id) cuando exista UI del admin_global.
+          await supabaseRef.current.from('user_preferences').upsert(
+            { user_id: userId, theme_mode: m, updated_at: new Date().toISOString() },
+            { onConflict: 'user_id' }
+          );
+        } catch { /* FK violation for admin_global — safe to ignore */ }
+      }, 800);
+    }
   }
 
   const current = OPTIONS.find(o => o.value === mode) ?? OPTIONS[1];
