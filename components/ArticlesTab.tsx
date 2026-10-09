@@ -66,8 +66,8 @@ const ARTICLES: Article[] = [
     id: 'equilibrio',
     emoji: '⚖️',
     title: 'El arte de repartir tu tiempo: estudios, baile, amigos, familia y tú',
-    color: 'var(--pink)',
-    colorSoft: 'var(--pink-soft)',
+    color: 'var(--accent)',
+    colorSoft: 'var(--accent-soft)',
     content: (
       <>
         <p>Tienes mucho en tus manos: el cole, los estudios, el baile, tus amigas, ayudar en casa, y además ser hija, hermana, sobrina y nieta. A veces puede sentirse como demasiado. La clave no es hacer todo perfecto — es aprender a repartir tu tiempo con intención.</p>
@@ -148,8 +148,8 @@ const ARTICLES: Article[] = [
     id: 'abrazo',
     emoji: '🤗',
     title: 'El poder del abrazo: la forma más honesta de decir "te quiero"',
-    color: 'var(--pink)',
-    colorSoft: 'var(--pink-soft)',
+    color: 'var(--accent)',
+    colorSoft: 'var(--accent-soft)',
     content: (
       <>
         <p>Hay cosas que las palabras no alcanzan a decir del todo. A veces una frase bonita se queda corta, y lo que de verdad comunica lo que sientes es algo mucho más simple: un abrazo.</p>
@@ -181,7 +181,7 @@ export default function ArticlesTab() {
     <div>
       <h3 style={{
         fontFamily: 'var(--font-title)', fontWeight: 700,
-        fontSize: 17, color: 'var(--pink)', marginBottom: 6,
+        fontSize: 17, color: 'var(--accent)', marginBottom: 6,
       }}>
         📚 Datos para ti
       </h3>

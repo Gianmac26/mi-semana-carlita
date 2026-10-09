@@ -126,7 +126,7 @@ export default function WeekTab({ weeks, tasks, onChange, childDisplayName, rule
                   onClick={() => setSelectedDay(otherDay)}
                   style={{
                     marginTop: 10, padding: '7px 16px', borderRadius: 10,
-                    border: 'none', background: 'var(--pink)', color: 'var(--on-accent)',
+                    border: 'none', background: 'var(--accent)', color: 'var(--on-accent)',
                     fontFamily: 'var(--font-title)', fontWeight: 700,
                     fontSize: 13, cursor: 'pointer',
                   }}

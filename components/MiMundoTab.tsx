@@ -20,8 +20,8 @@ const PROMPTS: Prompt[] = [
     emoji: '🫶',
     title: 'Lo que me gustaría hacer con mis papás',
     placeholder: 'Un viaje, una película, una tarde juntos... lo que sea que quieras compartir con ellos.',
-    color: 'var(--pink)',
-    colorSoft: 'var(--pink-soft)',
+    color: 'var(--accent)',
+    colorSoft: 'var(--accent-soft)',
   },
   {
     key: 'cancion',
@@ -68,8 +68,8 @@ const PROMPTS: Prompt[] = [
     emoji: '💌',
     title: 'Si pudiera pedirle algo a mis papás, sería...',
     placeholder: 'Escríbelo con confianza. Esto también lo leen ellos.',
-    color: 'var(--pink)',
-    colorSoft: 'var(--pink-soft)',
+    color: 'var(--accent)',
+    colorSoft: 'var(--accent-soft)',
   },
 ];
 
@@ -138,13 +138,13 @@ export default function MiMundoTab({ familyId, role }: Props) {
     return (
       <div>
         <div style={{
-          background: 'linear-gradient(135deg, var(--pink-soft), var(--lilac-soft))',
+          background: 'linear-gradient(135deg, var(--accent-soft), var(--lilac-soft))',
           borderRadius: 20, padding: '18px 20px', marginBottom: 24,
           border: '1.5px solid var(--line)',
         }}>
           <h3 style={{
             fontFamily: 'var(--font-title)', fontWeight: 700,
-            fontSize: 20, color: 'var(--pink)', marginBottom: 6,
+            fontSize: 20, color: 'var(--accent)', marginBottom: 6,
           }}>
             💜 Mi mundo
           </h3>
@@ -160,7 +160,7 @@ export default function MiMundoTab({ familyId, role }: Props) {
         ) : authors.map(({ displayName, answers }) => (
           <div key={displayName} style={{ marginBottom: 32 }}>
             {authors.length > 1 && (
-              <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, color: 'var(--pink)', marginBottom: 12 }}>
+              <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, color: 'var(--accent)', marginBottom: 12 }}>
                 {displayName}
               </h4>
             )}
@@ -201,13 +201,13 @@ export default function MiMundoTab({ familyId, role }: Props) {
     <div>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, var(--pink-soft), var(--lilac-soft))',
+        background: 'linear-gradient(135deg, var(--accent-soft), var(--lilac-soft))',
         borderRadius: 20, padding: '18px 20px', marginBottom: 24,
         border: '1.5px solid var(--line)',
       }}>
         <h3 style={{
           fontFamily: 'var(--font-title)', fontWeight: 700,
-          fontSize: 20, color: 'var(--pink)', marginBottom: 6,
+          fontSize: 20, color: 'var(--accent)', marginBottom: 6,
         }}>
           💜 Mi mundo
         </h3>

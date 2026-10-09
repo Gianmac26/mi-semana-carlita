@@ -30,9 +30,9 @@ export default function WeekSelector({ monday, onChange }: Props) {
 }
 
 const btnStyle: React.CSSProperties = {
-  background: 'var(--pink-soft)', border: 'none', borderRadius: 8,
+  background: 'var(--accent-soft)', border: 'none', borderRadius: 8,
   width: 32, height: 32, fontSize: 20, cursor: 'pointer',
-  color: 'var(--pink)', fontWeight: 700,
+  color: 'var(--accent)', fontWeight: 700,
   display: 'flex', alignItems: 'center', justifyContent: 'center',
   flexShrink: 0,
 };

@@ -52,12 +52,12 @@ export default function EventsTab({ familyId, role }: Props) {
 
   return (
     <div>
-      <h3 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 17, color: 'var(--pink)', marginBottom: 16 }}>
+      <h3 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 17, color: 'var(--accent)', marginBottom: 16 }}>
         🎈 Divertikids — Próximos eventos
       </h3>
 
       {role === 'padre' && (
-        <div style={{ background: 'var(--pink-soft)', borderRadius: 18, padding: 16, marginBottom: 20 }}>
+        <div style={{ background: 'var(--accent-soft)', borderRadius: 18, padding: 16, marginBottom: 20 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
             <div><label style={LABEL}>Fecha</label><input type="date" value={date} onChange={e => setDate(e.target.value)} style={INPUT} /></div>
             <div><label style={LABEL}>Hora</label><input type="time" value={time} onChange={e => setTime(e.target.value)} style={INPUT} /></div>
@@ -69,7 +69,7 @@ export default function EventsTab({ familyId, role }: Props) {
               placeholder="Ej: Cumpleaños de Sofi 🎂" style={INPUT} />
           </div>
           <button onClick={addEvent} disabled={!canAdd}
-            style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', background: canAdd ? 'var(--pink)' : 'var(--line)', color: canAdd ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: canAdd ? 'pointer' : 'not-allowed', transition: 'all 0.15s' }}>
+            style={{ width: '100%', padding: '12px', borderRadius: 12, border: 'none', background: canAdd ? 'var(--accent)' : 'var(--line)', color: canAdd ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: canAdd ? 'pointer' : 'not-allowed', transition: 'all 0.15s' }}>
             Agregar evento
           </button>
         </div>

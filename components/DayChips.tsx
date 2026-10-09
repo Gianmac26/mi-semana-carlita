@@ -30,9 +30,9 @@ export default function DayChips({ weekData, tasks, selected, onSelect, todayKey
             onClick={() => onSelect(day)}
             style={{
               flexShrink: 0,
-              background: isSel ? 'var(--pink)' : isToday ? 'var(--pink-soft)' : 'var(--bg-card)',
-              color: isSel ? 'var(--on-accent)' : isToday ? 'var(--pink)' : 'var(--ink-soft)',
-              border: isToday && !isSel ? '2px solid var(--pink)' : '2px solid var(--line)',
+              background: isSel ? 'var(--accent)' : isToday ? 'var(--accent-soft)' : 'var(--bg-card)',
+              color: isSel ? 'var(--on-accent)' : isToday ? 'var(--accent)' : 'var(--ink-soft)',
+              border: isToday && !isSel ? '2px solid var(--accent)' : '2px solid var(--line)',
               borderRadius: 12, padding: '8px 12px',
               fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 14,
               cursor: 'pointer',

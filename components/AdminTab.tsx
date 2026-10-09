@@ -159,14 +159,14 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
 
   return (
     <div>
-      <h3 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 17, color: 'var(--pink)', marginBottom: 16 }}>
+      <h3 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 17, color: 'var(--accent)', marginBottom: 16 }}>
         ⚙️ Admin
       </h3>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
         {([['tasks', '📋 Tareas'], ['invites', '🔑 Invitaciones'], ['mundo', '💜 Mi mundo']] as [Section, string][]).map(([key, label]) => (
           <button key={key} onClick={() => setSection(key)}
-            style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--pink)' : 'var(--line)'}`, background: section === key ? 'var(--pink)' : 'var(--bg-card)', color: section === key ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--accent)' : 'var(--line)'}`, background: section === key ? 'var(--accent)' : 'var(--bg-card)', color: section === key ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
             {label}
           </button>
         ))}
@@ -188,8 +188,8 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                     style={{
                       padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700,
                       fontFamily: 'var(--font-title)', cursor: 'pointer',
-                      border: `1.5px solid ${selectedChildId === child.id ? 'var(--pink)' : 'var(--line)'}`,
-                      background: selectedChildId === child.id ? 'var(--pink)' : 'var(--bg-card)',
+                      border: `1.5px solid ${selectedChildId === child.id ? 'var(--accent)' : 'var(--line)'}`,
+                      background: selectedChildId === child.id ? 'var(--accent)' : 'var(--bg-card)',
                       color: selectedChildId === child.id ? 'var(--on-accent)' : 'var(--ink-soft)',
                       transition: 'all 0.15s',
                     }}
@@ -245,7 +245,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                       style={{
                         padding: '3px 8px', borderRadius: 8, fontSize: 12, fontWeight: 700,
                         fontFamily: 'var(--font-title)', cursor: 'pointer', border: 'none',
-                        background: active ? 'var(--pink)' : 'var(--line)',
+                        background: active ? 'var(--accent)' : 'var(--line)',
                         color: active ? 'var(--on-accent)' : 'var(--ink-soft)',
                       }}
                     >
@@ -258,8 +258,8 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
           ))}
 
           {/* Nueva tarea */}
-          <div style={{ background: 'var(--pink-soft)', borderRadius: 16, padding: 14, marginTop: 8 }}>
-            <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--pink)', marginBottom: 10 }}>Nueva tarea</h4>
+          <div style={{ background: 'var(--accent-soft)', borderRadius: 16, padding: 14, marginTop: 8 }}>
+            <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>Nueva tarea</h4>
 
             {/* Icono: presets + campo libre */}
             <div style={{ marginBottom: 8 }}>
@@ -267,8 +267,8 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                 {ICON_PRESETS.map(ic => (
                   <button key={ic} onClick={() => setNewTask(p => ({ ...p, icon: ic }))}
                     style={{
-                      width: 34, height: 34, borderRadius: 8, border: `2px solid ${newTask.icon === ic ? 'var(--pink)' : 'transparent'}`,
-                      background: newTask.icon === ic ? 'var(--pink-soft)' : 'var(--bg-card)',
+                      width: 34, height: 34, borderRadius: 8, border: `2px solid ${newTask.icon === ic ? 'var(--accent)' : 'transparent'}`,
+                      background: newTask.icon === ic ? 'var(--accent-soft)' : 'var(--bg-card)',
                       fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>{ic}</button>
                 ))}
@@ -304,7 +304,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
                       style={{
                         padding: '5px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700,
                         fontFamily: 'var(--font-title)', cursor: 'pointer', border: 'none',
-                        background: active ? 'var(--pink)' : 'var(--bg-card)',
+                        background: active ? 'var(--accent)' : 'var(--bg-card)',
                         color: active ? 'var(--on-accent)' : 'var(--ink-soft)',
                       }}
                     >
@@ -323,7 +323,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
             </div>
 
             <button onClick={addTask} disabled={saving || !newTask.label.trim() || newTask.days.length === 0}
-              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: (saving || !newTask.label.trim() || newTask.days.length === 0) ? 0.6 : 1 }}>
+              style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 14, cursor: 'pointer', opacity: (saving || !newTask.label.trim() || newTask.days.length === 0) ? 0.6 : 1 }}>
               {saving ? 'Guardando...' : 'Agregar tarea'}
             </button>
             {taskError && <p style={{ color: 'var(--error)', fontSize: 13, marginTop: 6 }}>{taskError}</p>}
@@ -334,10 +334,10 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
       {section === 'invites' && (
         <div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-            <button onClick={() => generateCode('hijo')} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--pink)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+            <button onClick={() => generateCode('hijo')} style={{ flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
               + Código para hijo/a
             </button>
-            <button onClick={() => generateCode('padre')} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1.5px solid var(--pink)', background: 'var(--pink-soft)', color: 'var(--pink)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+            <button onClick={() => generateCode('padre')} style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1.5px solid var(--accent)', background: 'var(--accent-soft)', color: 'var(--accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
               + Código para papá/mamá
             </button>
           </div>
@@ -367,7 +367,7 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
           ) : Object.values(mundoByAuthor).map(({ displayName, answers }) => (
             <div key={displayName} style={{ marginBottom: 24 }}>
               {Object.keys(mundoByAuthor).length > 1 && (
-                <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--pink)', marginBottom: 10 }}>
+                <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
                   {displayName}
                 </h4>
               )}

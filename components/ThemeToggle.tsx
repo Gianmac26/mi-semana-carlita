@@ -1,41 +1,64 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { ThemeMode } from '@/lib/themes';
+import { DEFAULT_PALETTE } from '@/lib/themes';
 
-type Theme = 'light' | 'dark' | 'auto';
-
-const OPTIONS: { value: Theme; icon: string; label: string }[] = [
+const OPTIONS: { value: ThemeMode; icon: string; label: string }[] = [
   { value: 'light', icon: '☀️', label: 'Claro' },
   { value: 'auto',  icon: '🔄', label: 'Auto' },
   { value: 'dark',  icon: '🌙', label: 'Oscuro' },
 ];
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('auto');
-  const [open, setOpen]   = useState(false);
+const MODE_KEY    = 'mi-semana-mode';
+const PALETTE_KEY = 'mi-semana-palette';
 
-  // Load saved preference — migra la key 'carlita-theme' → 'mi-semana-theme' si existe
+function applyMode(mode: ThemeMode) {
+  if (mode === 'auto') {
+    document.documentElement.removeAttribute('data-mode');
+  } else {
+    document.documentElement.setAttribute('data-mode', mode);
+  }
+}
+
+function applyPalette(paletteId: string) {
+  document.documentElement.setAttribute('data-palette', paletteId);
+}
+
+export default function ThemeToggle() {
+  const [mode, setMode] = useState<ThemeMode>('auto');
+  const [open, setOpen] = useState(false);
+
   useEffect(() => {
     try {
-      if (!localStorage.getItem('mi-semana-theme') && localStorage.getItem('carlita-theme')) {
-        localStorage.setItem('mi-semana-theme', localStorage.getItem('carlita-theme')!);
+      // Migrate legacy key 'mi-semana-theme' → 'mi-semana-mode'
+      const legacy = localStorage.getItem('mi-semana-theme');
+      if (legacy && !localStorage.getItem(MODE_KEY)) {
+        localStorage.setItem(MODE_KEY, legacy);
+        localStorage.removeItem('mi-semana-theme');
+      }
+      // Migrate even older 'carlita-theme' key
+      const veryLegacy = localStorage.getItem('carlita-theme');
+      if (veryLegacy && !localStorage.getItem(MODE_KEY)) {
+        localStorage.setItem(MODE_KEY, veryLegacy);
         localStorage.removeItem('carlita-theme');
       }
-      const saved = localStorage.getItem('mi-semana-theme') as Theme | null;
-      if (saved) apply(saved);
-    } catch {}
+
+      const savedMode    = (localStorage.getItem(MODE_KEY) as ThemeMode | null) ?? 'auto';
+      const savedPalette = localStorage.getItem(PALETTE_KEY) ?? DEFAULT_PALETTE;
+
+      setMode(savedMode);
+      applyMode(savedMode);
+      applyPalette(savedPalette);
+    } catch { /* storage unavailable */ }
   }, []);
 
-  function apply(t: Theme) {
-    setTheme(t);
-    try { localStorage.setItem('mi-semana-theme', t); } catch {}
-    if (t === 'auto') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', t);
-    }
+  function selectMode(m: ThemeMode) {
+    setMode(m);
+    try { localStorage.setItem(MODE_KEY, m); } catch {}
+    applyMode(m);
   }
 
-  const current = OPTIONS.find(o => o.value === theme) ?? OPTIONS[1];
+  const current = OPTIONS.find(o => o.value === mode) ?? OPTIONS[1];
 
   return (
     <div style={{ position: 'relative' }}>
@@ -58,11 +81,8 @@ export default function ThemeToggle() {
 
       {open && (
         <>
-          {/* Backdrop */}
-          <div
-            onClick={() => setOpen(false)}
-            style={{ position: 'fixed', inset: 0, zIndex: 199 }}
-          />
+          <div onClick={() => setOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 199 }} />
           <div style={{
             position: 'absolute', top: '110%', right: 0, zIndex: 200,
             background: 'var(--bg-card)', borderRadius: 14,
@@ -73,20 +93,20 @@ export default function ThemeToggle() {
             {OPTIONS.map(opt => (
               <button
                 key={opt.value}
-                onClick={() => { apply(opt.value); setOpen(false); }}
+                onClick={() => { selectMode(opt.value); setOpen(false); }}
                 style={{
                   width: '100%', padding: '10px 14px',
-                  background: theme === opt.value ? 'var(--pink-soft)' : 'transparent',
+                  background: mode === opt.value ? 'var(--accent-soft)' : 'transparent',
                   border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 8,
                   fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 14,
-                  color: theme === opt.value ? 'var(--pink)' : 'var(--ink)',
+                  color: mode === opt.value ? 'var(--accent)' : 'var(--ink)',
                   textAlign: 'left',
                 }}
               >
                 <span>{opt.icon}</span>
                 <span>{opt.label}</span>
-                {theme === opt.value && <span style={{ marginLeft: 'auto' }}>✓</span>}
+                {mode === opt.value && <span style={{ marginLeft: 'auto' }}>✓</span>}
               </button>
             ))}
           </div>

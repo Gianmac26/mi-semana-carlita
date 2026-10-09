@@ -75,11 +75,11 @@ export default function BottomNav({ items, active, onSelect }: Props) {
                     width: '100%', minHeight: 56,
                     padding: '12px 16px', marginBottom: 8,
                     borderRadius: 14,
-                    background: isActive ? 'var(--pink-soft)' : 'var(--bg-card)',
-                    border: `1.5px solid ${isActive ? 'var(--pink)' : 'var(--line)'}`,
+                    background: isActive ? 'var(--accent-soft)' : 'var(--bg-card)',
+                    border: `1.5px solid ${isActive ? 'var(--accent)' : 'var(--line)'}`,
                     display: 'flex', alignItems: 'center', gap: 12,
                     fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15,
-                    color: isActive ? 'var(--pink)' : 'var(--ink)',
+                    color: isActive ? 'var(--accent)' : 'var(--ink)',
                     cursor: 'pointer',
                     textAlign: 'left',
                   }}
@@ -121,7 +121,7 @@ export default function BottomNav({ items, active, onSelect }: Props) {
                 gap: 3, padding: '8px 4px',
                 minHeight: 56, minWidth: 48,
                 background: 'none', border: 'none', cursor: 'pointer',
-                color: isActive ? 'var(--pink)' : 'var(--ink-soft)',
+                color: isActive ? 'var(--accent)' : 'var(--ink-soft)',
                 transition: 'color 0.15s',
               }}
             >
@@ -148,7 +148,7 @@ export default function BottomNav({ items, active, onSelect }: Props) {
               gap: 3, padding: '8px 4px',
               minHeight: 56, minWidth: 48,
               background: 'none', border: 'none', cursor: 'pointer',
-              color: moreIsActive || moreOpen ? 'var(--pink)' : 'var(--ink-soft)',
+              color: moreIsActive || moreOpen ? 'var(--accent)' : 'var(--ink-soft)',
               transition: 'color 0.15s',
             }}
           >

@@ -45,7 +45,7 @@ export default function LoginPage() {
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'100vh', padding:'0 24px', background:'var(--bg)' }}>
       <div style={{ width:'100%', maxWidth:380, textAlign:'center' }}>
-        <h1 style={{ fontFamily:'var(--font-title)', fontWeight:700, fontSize:32, color:'var(--pink)', letterSpacing:1, marginBottom:8 }}>MI SEMANA</h1>
+        <h1 style={{ fontFamily:'var(--font-title)', fontWeight:700, fontSize:32, color:'var(--accent)', letterSpacing:1, marginBottom:8 }}>MI SEMANA</h1>
         <p style={{ fontFamily:'var(--font-body)', color:'var(--ink-soft)', fontSize:15, marginBottom:40 }}>Tu espacio familiar ✨</p>
 
         {/* Botón principal: Google */}
@@ -96,7 +96,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              style={{ width:'100%', minHeight:48, padding:'14px 20px', borderRadius:14, border:'none', background:'var(--pink)', color:'var(--on-accent)', fontFamily:'var(--font-title)', fontWeight:600, fontSize:16, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+              style={{ width:'100%', minHeight:48, padding:'14px 20px', borderRadius:14, border:'none', background:'var(--accent)', color:'var(--on-accent)', fontFamily:'var(--font-title)', fontWeight:600, fontSize:16, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
             >
               {loading ? 'Entrando…' : 'Entrar con email'}
             </button>

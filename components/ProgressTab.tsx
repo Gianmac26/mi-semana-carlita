@@ -49,7 +49,7 @@ export default function ProgressTab({ state, tasks }: Props) {
       <section style={{ marginBottom: 28 }}>
         <h3 style={{
           fontFamily: 'var(--font-title)', fontWeight: 700,
-          fontSize: 17, color: 'var(--pink)', marginBottom: 16,
+          fontSize: 17, color: 'var(--accent)', marginBottom: 16,
         }}>
           Esta semana, día por día
         </h3>
@@ -92,7 +92,7 @@ export default function ProgressTab({ state, tasks }: Props) {
                 }} />
                 <span style={{
                   fontSize: 12, fontWeight: 600,
-                  color: isToday ? 'var(--pink)' : 'var(--ink-soft)',
+                  color: isToday ? 'var(--accent)' : 'var(--ink-soft)',
                 }}>
                   {CHART_LABELS[i]}
                 </span>

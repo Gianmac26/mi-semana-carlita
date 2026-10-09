@@ -5,7 +5,7 @@ const MAP: Record<SaveStatus, { text: string; color: string } | null> = {
   idle:   null,
   saving: { text: '⏳ Guardando...', color: 'var(--yellow)' },
   saved:  { text: '✓ Guardado', color: 'var(--ok)' },
-  error:  { text: '⚠ Sin conexión, reintentando...', color: 'var(--pink)' },
+  error:  { text: '⚠ Sin conexión, reintentando...', color: 'var(--accent)' },
 };
 
 export default function StatusIndicator({ status }: { status: SaveStatus }) {

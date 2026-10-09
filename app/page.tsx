@@ -176,20 +176,20 @@ export default function Home() {
   if (pageState === 'loading') return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', flexDirection: 'column', gap: 12 }}>
       <span style={{ fontSize: 32 }}>✨</span>
-      <span style={{ fontFamily: 'var(--font-title)', color: 'var(--pink)', fontSize: 18 }}>Cargando tu semana...</span>
+      <span style={{ fontFamily: 'var(--font-title)', color: 'var(--accent)', fontSize: 18 }}>Cargando tu semana...</span>
     </div>
   );
 
   if (pageState === 'no-profile-first') return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
-        <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--pink)', fontSize: 22, marginBottom: 8 }}>¡Bienvenid@! 🎉</h2>
+        <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--accent)', fontSize: 22, marginBottom: 8 }}>¡Bienvenid@! 🎉</h2>
         <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginBottom: 24 }}>Crea tu familia ingresando tu nombre.</p>
         <input value={displayName} onChange={e => setDisplayName(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleCreateFamily()} placeholder="Tu nombre"
           style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: '1.5px solid var(--line)', background: 'var(--bg-card)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 15, outline: 'none', marginBottom: 12, boxSizing: 'border-box' }} />
         <button onClick={handleCreateFamily} disabled={!displayName.trim() || creating}
-          style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: 'var(--pink)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
+          style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
           {creating ? 'Creando...' : 'Entrar como papá/mamá'}
         </button>
         <button onClick={() => setPageState('no-profile-code')}
@@ -203,14 +203,14 @@ export default function Home() {
   if (pageState === 'no-profile-code') return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '0 24px' }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
-        <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--pink)', fontSize: 22, marginBottom: 8 }}>Ingresa tu código</h2>
+        <h2 style={{ fontFamily: 'var(--font-title)', color: 'var(--accent)', fontSize: 22, marginBottom: 8 }}>Ingresa tu código</h2>
         <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginBottom: 24 }}>Pídele el código de 6 dígitos a tus papás.</p>
         <input value={codeInput} onChange={e => setCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
           onKeyDown={e => e.key === 'Enter' && handleRedeemCode()} placeholder="000000" maxLength={6}
           style={{ width: '100%', padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${codeError ? 'var(--error)' : 'var(--line)'}`, background: 'var(--bg-card)', color: 'var(--ink)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 24, letterSpacing: 6, textAlign: 'center', outline: 'none', marginBottom: 8, boxSizing: 'border-box' }} />
         {codeError && <p style={{ color: 'var(--error)', fontSize: 13, marginBottom: 12 }}>{codeError}</p>}
         <button onClick={handleRedeemCode} disabled={codeInput.length !== 6 || codeLoading}
-          style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: 'var(--pink)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 4 }}>
+          style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', background: 'var(--accent)', color: 'var(--on-accent)', fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 4 }}>
           {codeLoading ? 'Verificando...' : 'Entrar'}
         </button>
         <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontSize: 12, marginTop: 20 }}>
@@ -246,7 +246,7 @@ export default function Home() {
       <div className="main-content" style={{ maxWidth: 480, margin: '0 auto', padding: '0 16px 100px' }}>
         <header style={{ display: 'flex', alignItems: 'center', padding: '20px 0 16px', gap: 12 }}>
           <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 30, color: 'var(--pink)', letterSpacing: 1 }}>MI SEMANA</h1>
+            <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 30, color: 'var(--accent)', letterSpacing: 1 }}>MI SEMANA</h1>
             <p style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-soft)', fontSize: 14, marginTop: 2 }}>{profile?.display_name} ✨</p>
           </div>
           <ThemeToggle />
@@ -261,7 +261,7 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 0 8px', marginBottom: 16, scrollbarWidth: 'none' }}>
             {TABS.map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
-                style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 20, background: tab === t.key ? 'var(--pink)' : 'var(--bg-card)', color: tab === t.key ? 'var(--on-accent)' : 'var(--ink-soft)', border: tab === t.key ? '1.5px solid var(--pink)' : '1.5px solid var(--line)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 20, background: tab === t.key ? 'var(--accent)' : 'var(--bg-card)', color: tab === t.key ? 'var(--on-accent)' : 'var(--ink-soft)', border: tab === t.key ? '1.5px solid var(--accent)' : '1.5px solid var(--line)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                 {t.label}
               </button>
             ))}

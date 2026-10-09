@@ -41,8 +41,8 @@ const HELPLINES: Helpline[] = [
     phone: '100', phoneTel: '100',
     note: 'Gratuita · Confidencial · 24 h',
     chat: 'https://chat100.warminan.gob.pe',
-    color: 'var(--pink)',
-    colorSoft: 'var(--pink-soft)',
+    color: 'var(--accent)',
+    colorSoft: 'var(--accent-soft)',
   },
   {
     emoji: '🏫',
@@ -123,7 +123,7 @@ function BreathingGuide({ onStop }: { onStop: () => void }) {
 
   const phase = BREATH_SEQ[phaseIdx];
   const circleSize = running ? (phase.scale === 1 ? 150 : 70) : 100;
-  const circleColor = phaseIdx === 0 ? 'var(--teal)' : phaseIdx === 1 ? 'var(--lilac)' : 'var(--pink)';
+  const circleColor = phaseIdx === 0 ? 'var(--teal)' : phaseIdx === 1 ? 'var(--lilac)' : 'var(--accent)';
 
   return (
     <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
