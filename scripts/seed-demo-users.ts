@@ -37,8 +37,8 @@ type Role = 'padre' | 'hijo' | 'admin_global';
 
 const USERS: { tag: string; email: string; password: string; name: string; role: Role; birth_year?: number }[] = [
   { tag: 'padre.demo', email: alias('padre.demo'), password: 'PadreDemo#2026!', name: 'Papá Demo',       role: 'padre'        },
-  { tag: 'hijo1.demo', email: alias('hijo1.demo'), password: 'Hijo1Demo#2026!', name: 'Sofía (15 años)', role: 'hijo',         birth_year: 2011 },
-  { tag: 'hijo2.demo', email: alias('hijo2.demo'), password: 'Hijo2Demo#2026!', name: 'Lucas (12 años)', role: 'hijo',         birth_year: 2014 },
+  { tag: 'hijo1.demo', email: alias('hijo1.demo'), password: 'Hijo1Demo#2026!', name: 'Sofía',  role: 'hijo', birth_year: 2011 },
+  { tag: 'hijo2.demo', email: alias('hijo2.demo'), password: 'Hijo2Demo#2026!', name: 'Lucas',  role: 'hijo', birth_year: 2014 },
   { tag: 'admin.demo', email: alias('admin.demo'), password: 'AdminDemo#2026!', name: 'Admin GlobalTec', role: 'admin_global' },
 ];
 
