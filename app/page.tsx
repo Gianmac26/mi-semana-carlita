@@ -14,11 +14,12 @@ import AdminTab from '@/components/AdminTab';
 import GoldenRules from '@/components/GoldenRules';
 import GoldenRulesEditor, { type FamilyRule } from '@/components/GoldenRulesEditor';
 import ThemeToggle from '@/components/ThemeToggle';
+import ThemePicker from '@/components/ThemePicker';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
 
 type PageState = 'loading' | 'no-profile-first' | 'no-profile-code' | 'ready';
-type Tab = 'week' | 'progress' | 'events' | 'articles' | 'mundo' | 'admin';
+type Tab = 'week' | 'progress' | 'events' | 'articles' | 'mundo' | 'admin' | 'tema';
 
 const BASE_TABS: { key: Tab; label: string }[] = [
   { key: 'week',     label: '📅 Semana' },
@@ -26,6 +27,7 @@ const BASE_TABS: { key: Tab; label: string }[] = [
   { key: 'events',   label: '🎈 Eventos' },
   { key: 'articles', label: '📚 Para ti' },
   { key: 'mundo',    label: '💜 Mi mundo' },
+  { key: 'tema',     label: '🎨 Paleta' },
 ];
 
 const supabase = createBrowserClient();
@@ -247,6 +249,7 @@ export default function Home() {
     { key: 'articles', icon: '💡', label: 'Bienestar' },
     { key: 'progress', icon: '📊', label: 'Logros'    },
     { key: 'events',   icon: '🎈', label: 'Eventos'   },
+    { key: 'tema',     icon: '🎨', label: 'Paleta'    },
   ];
   const PADRE_NAV: NavItem[] = [
     { key: 'admin',    icon: '⚙️', label: 'Admin'     },
@@ -255,6 +258,7 @@ export default function Home() {
     { key: 'progress', icon: '📊', label: 'Logros'    },
     { key: 'events',   icon: '🎈', label: 'Eventos'   },
     { key: 'articles', icon: '💡', label: 'Bienestar' },
+    { key: 'tema',     icon: '🎨', label: 'Paleta'    },
   ];
   const navItems = isAdmin ? PADRE_NAV : HIJO_NAV;
 
@@ -301,6 +305,7 @@ export default function Home() {
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'articles' && <ArticlesTab />}
         {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
+        {tab === 'tema'     && profile && <ThemePicker userId={profile.id} />}
         {tab === 'admin'    && isAdmin && profile && (
           <AdminTab
             familyId={profile.family_id}
