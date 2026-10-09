@@ -9,6 +9,8 @@ import EventsTab from '@/components/EventsTab';
 import ArticlesTab from '@/components/ArticlesTab';
 import MiMundoTab from '@/components/MiMundoTab';
 import AdminTab from '@/components/AdminTab';
+import GoldenRules from '@/components/GoldenRules';
+import GoldenRulesEditor, { type FamilyRule } from '@/components/GoldenRulesEditor';
 import ThemeToggle from '@/components/ThemeToggle';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
@@ -41,6 +43,7 @@ export default function Home() {
   const [childrenProfiles, setChildrenProfiles] = useState<Profile[]>([]);
   const [selectedChildId,  setSelectedChildId]  = useState<string | null>(null);
   const [allChildrenWeeks, setAllChildrenWeeks] = useState<Record<string, AppState['weeks']>>({});
+  const [familyRules,      setFamilyRules]      = useState<FamilyRule[]>([]);
 
   useEffect(() => {
     async function init() {
@@ -58,9 +61,12 @@ export default function Home() {
 
   async function loadAppData(p: Profile) {
     setProfile(p);
-    const { data: taskRows } = await supabase
-      .from('tasks').select('*').eq('family_id', p.family_id).eq('active', true).order('sort_order');
+    const [{ data: taskRows }, { data: ruleRows }] = await Promise.all([
+      supabase.from('tasks').select('*').eq('family_id', p.family_id).eq('active', true).order('sort_order'),
+      supabase.from('family_rules').select('*').eq('family_id', p.family_id).eq('active', true).order('sort_order'),
+    ]);
     setTasks((taskRows as DbTask[]) ?? []);
+    setFamilyRules((ruleRows as FamilyRule[]) ?? []);
 
     if (p.role === 'padre') {
       const [{ data: hijoRows }, { data: weekRows }] = await Promise.all([
@@ -266,6 +272,11 @@ export default function Home() {
             profile?.role === 'hijo'
               ? profile.display_name
               : childrenProfiles.find(c => c.id === selectedChildId)?.display_name
+          }
+          rulesSlot={
+            profile?.role === 'padre' && profile
+              ? <GoldenRulesEditor familyId={profile.family_id} rules={familyRules} onRulesChange={setFamilyRules} />
+              : <GoldenRules rules={familyRules} />
           }
         />}
         {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} />}

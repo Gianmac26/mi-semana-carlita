@@ -7,13 +7,13 @@ import { getMondayOfWeek, formatWeekKey, getTodayDayKey } from '@/lib/utils';
 import WeekSelector from './WeekSelector';
 import DayChips from './DayChips';
 import TaskItem from './TaskItem';
-import GoldenRules from './GoldenRules';
 
 interface Props {
   weeks: AppState['weeks'];
   tasks: DbTask[];
   onChange: (weekKey: string, day: string, dayState: DayState) => void;
   childDisplayName?: string;
+  rulesSlot?: React.ReactNode;
 }
 
 const DAY_LABELS: Record<string, string> = { mon: 'Lunes', tue: 'Martes', wed: 'Miércoles', thu: 'Jueves', fri: 'Viernes', sat: 'Sábado', sun: 'Domingo' };
@@ -25,7 +25,7 @@ const INPUT: React.CSSProperties = {
   outline: 'none',
 };
 
-export default function WeekTab({ weeks, tasks, onChange, childDisplayName }: Props) {
+export default function WeekTab({ weeks, tasks, onChange, childDisplayName, rulesSlot }: Props) {
   const todayKey = getTodayDayKey();
   const [monday, setMonday] = useState<Date>(() => getMondayOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState<DayKey>(() => {
@@ -170,7 +170,7 @@ export default function WeekTab({ weeks, tasks, onChange, childDisplayName }: Pr
           </div>
         )}
 
-        <GoldenRules />
+        {rulesSlot}
       </div>
     </div>
   );

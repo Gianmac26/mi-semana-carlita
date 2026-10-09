@@ -216,6 +216,27 @@ async function main() {
     console.log(`  • ${r.emoji} ${r.title}`);
   }
 
+  // ── 5. family_rules ────────────────────────────────────────────────────────
+
+  console.log('\n── 5. family_rules');
+
+  const RULES = [
+    { emoji: '📵', text: 'Sin celular en horario de estudio — solo música', sort_order: 0 },
+    { emoji: '🛏️', text: 'El celular duerme en el escritorio, no en la cama', sort_order: 1 },
+    { emoji: '⏰', text: 'Hora tope para dormir: 10:00 pm, lunes a viernes', sort_order: 2 },
+    { emoji: '🍽️', text: 'Lavar los servicios inmediatamente después de usarlos', sort_order: 3 },
+    { emoji: '🏡', text: 'Cada vez que pueda, ayudar con la limpieza de casa', sort_order: 4 },
+  ];
+
+  for (const r of RULES) {
+    const { error } = await supa.from('family_rules').upsert(
+      { family_id: familyId, emoji: r.emoji, text: r.text, sort_order: r.sort_order, active: true },
+      { onConflict: 'family_id,sort_order' }
+    );
+    if (error) throw new Error(`Upsert family_rule "${r.text}": ${error.message}`);
+    console.log(`  • ${r.emoji} ${r.text}`);
+  }
+
   console.log('\n✅ seed-demo-content.ts completado.');
   console.log('   Seed demo completo. Revisa scripts/seed-demo.credentials.txt para las credenciales.');
 }

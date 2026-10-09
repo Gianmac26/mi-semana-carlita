@@ -1,12 +1,22 @@
-const RULES = [
-  { icon: '📵', text: 'Sin celular en horario de estudio — solo música' },
-  { icon: '🛏️', text: 'El celular duerme en el escritorio, no en la cama' },
-  { icon: '⏰', text: 'Hora tope para dormir: 10:00 pm, lunes a viernes' },
-  { icon: '🍽️', text: 'Lavar los servicios inmediatamente después de usarlos' },
-  { icon: '🏡', text: 'Cada vez que pueda, ayudar con la limpieza de casa' },
-];
+interface Rule {
+  id: string;
+  emoji: string;
+  text: string;
+}
 
-export default function GoldenRules() {
+interface Props {
+  rules: Rule[];
+}
+
+export default function GoldenRules({ rules }: Props) {
+  if (rules.length === 0) {
+    return (
+      <div style={{ marginTop: 28, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 14, fontStyle: 'italic' }}>
+        Tu familia aún no ha definido reglas. Pídele a tu papá o mamá que agregue algunas.
+      </div>
+    );
+  }
+
   return (
     <div style={{ marginTop: 28 }}>
       <h3 style={{
@@ -16,16 +26,16 @@ export default function GoldenRules() {
         ⭐ Reglas de oro
       </h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {RULES.map((r, i) => (
+        {rules.map(r => (
           <div
-            key={i}
+            key={r.id}
             style={{
               background: 'var(--lilac-soft)', borderRadius: 14,
               padding: '12px 16px',
               display: 'flex', alignItems: 'center', gap: 12,
             }}
           >
-            <span style={{ fontSize: 22, flexShrink: 0 }}>{r.icon}</span>
+            <span style={{ fontSize: 22, flexShrink: 0 }}>{r.emoji}</span>
             <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink)' }}>
               {r.text}
             </span>
