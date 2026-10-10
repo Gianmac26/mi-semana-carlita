@@ -40,7 +40,7 @@ const HELPLINES: Helpline[] = [
     description: 'Violencia familiar y sexual',
     phone: '100', phoneTel: '100',
     note: 'Gratuita · Confidencial · 24 h',
-    chat: 'https://chat100.warminan.gob.pe',
+    chat: 'https://chat100.mimp.gob.pe',
     color: 'var(--accent)',
     colorSoft: 'var(--accent-soft)',
   },

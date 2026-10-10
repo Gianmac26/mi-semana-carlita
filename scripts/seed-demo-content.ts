@@ -1,7 +1,9 @@
 // scripts/seed-demo-content.ts
 // Paso 2 de 2 del seed demo.
-// Crea: tareas (8), eventos (3), mi_mundo_entries (8), global_resources (3).
-// Prerrequisito: seed-demo-users.ts ya corrido (familia + profiles en DB).
+// Crea: tareas (8), eventos (3), mi_mundo_entries (8), global_resources (3),
+//       family_rules (5), wellness_resources (8).
+// Prerrequisito: seed-demo-users.ts ya corrido (familia + profiles en DB)
+//                y migración 005_wellness_resources.sql aplicada.
 //
 // Uso: npx tsx scripts/seed-demo-content.ts
 
@@ -235,6 +237,295 @@ async function main() {
     );
     if (error) throw new Error(`Upsert family_rule "${r.text}": ${error.message}`);
     console.log(`  • ${r.emoji} ${r.text}`);
+  }
+
+  // ── 6. wellness_resources ──────────────────────────────────────────────────
+
+  console.log('\n── 6. wellness_resources');
+
+  type HelplineRef = { label: string; tel?: string; url?: string; note?: string };
+  type WellnessResource = {
+    slug:          string;
+    emoji:         string;
+    category:      'crisis' | 'tca' | 'bullying' | 'violencia' | 'emociones' | 'valores';
+    title:         string;
+    summary:       string;
+    body_markdown: string;
+    action_steps:  string[];
+    helpline_refs: HelplineRef[];
+    sort_order:    number;
+  };
+
+  const WELLNESS: WellnessResource[] = [
+    // ── CRISIS
+    {
+      slug:     'prevencion-suicidio-senales',
+      emoji:    '🚨',
+      category: 'crisis',
+      title:    'Señales de alerta: prevención del suicidio',
+      summary:  'Reconocer las señales puede salvar una vida.',
+      body_markdown: md(
+        '## Señales de alerta',
+        'Prestar atención a cambios drásticos en una persona cercana puede marcar la diferencia. Algunas señales:',
+        '',
+        '- Hablar o escribir sobre la muerte, el suicidio o "desaparecer".',
+        '- Sentimientos de desesperanza, sentirse una carga para otros.',
+        '- Aislamiento repentino de amigos y familia.',
+        '- Cambios drásticos en sueño, alimentación o higiene.',
+        '- Regalar objetos personales como si se estuviera despidiendo.',
+        '- Conductas de riesgo (cruzar sin mirar, consumir sustancias).',
+        '',
+        '## Cómo actuar',
+        'No necesitas ser psicólogo. Solo estar presente.'
+      ),
+      action_steps: [
+        'Habla claro y directo: "¿Estás pensando en hacerte daño?". Preguntar no incita.',
+        'Permanece al lado. No dejes sola a la persona.',
+        'Retira objetos peligrosos del alcance si puedes hacerlo sin confrontar.',
+        'No minimices con "tienes que ser fuerte" o "otros están peor".',
+        'Acompaña a la persona a un establecimiento de salud o llama a la Línea 113.',
+        'No prometas guardar el secreto. La vida está primero.',
+      ],
+      helpline_refs: [
+        { label: 'Línea 113, opción 5', tel: '113', note: 'Minsa, 24/7, gratuito' },
+        { label: 'WhatsApp Minsa', url: 'https://wa.me/51955557000', note: 'Orientación en salud mental' },
+      ],
+      sort_order: 1,
+    },
+
+    // ── TCA
+    {
+      slug:     'trastornos-conducta-alimentaria',
+      emoji:    '🍽️',
+      category: 'tca',
+      title:    'Trastornos de la conducta alimentaria',
+      summary:  'No es un tema de fuerza de voluntad. Es salud mental.',
+      body_markdown: md(
+        '## ¿Qué son?',
+        'Los TCA son trastornos mentales graves que afectan la relación con la comida, el cuerpo y el peso. No se curan con "querer comer más" o "dejar de comer".',
+        '',
+        '## Señales de alerta',
+        '',
+        '- Miedo intenso a subir de peso, incluso estando por debajo del peso saludable.',
+        '- Control excesivo de calorías, pesar la comida, evitar comer en público.',
+        '- Atracones (comer mucho en poco tiempo) seguidos de culpa o purgas (vómito, laxantes, ejercicio extremo).',
+        '- Aislamiento en las comidas, excusas para no comer.',
+        '- Obsesión con espejos, balanzas, o el tamaño del cuerpo.',
+        '',
+        'Si reconoces alguna, no estás sola. No estás solo.'
+      ),
+      action_steps: [
+        'Habla con un adulto de confianza. No tienes que pasar por esto en silencio.',
+        'Acude a la Línea 113, opción 5. La atención es gratuita y confidencial.',
+        'Evita dietas restrictivas sin supervisión médica. Pueden empeorar el cuadro.',
+        'El diagnóstico lo hace un profesional de salud mental, no un test de internet.',
+      ],
+      helpline_refs: [
+        { label: 'Línea 113, opción 5', tel: '113', note: 'Minsa, orientación en TCA' },
+      ],
+      sort_order: 2,
+    },
+
+    // ── BULLYING
+    {
+      slug:     'bullying-que-hacer',
+      emoji:    '🛡️',
+      category: 'bullying',
+      title:    'Qué hacer si sufres bullying',
+      summary:  'No es tu culpa. Buscar ayuda es un acto de valentía.',
+      body_markdown: md(
+        '## ¿Qué es el bullying?',
+        'Es violencia física, psicológica o sexual entre estudiantes, de forma repetida y con desequilibrio de poder. Incluye el ciberacoso.',
+        '',
+        '## Lo que NO funciona',
+        '- Responder con violencia (escala el conflicto).',
+        '- Callarlo (protege al agresor, no a ti).',
+        '- Creer que "ya pasará" solo.'
+      ),
+      action_steps: [
+        'No respondas con violencia. No es cobardía, es estrategia.',
+        'Guarda pruebas: capturas de pantalla, mensajes, testigos. Anota fechas.',
+        'Cuéntale a un adulto de confianza: tu mamá, papá, un profesor, el auxiliar.',
+        'Reporta en SíseVe: línea gratuita 0800-76888 o WhatsApp 991 410 000.',
+        'No te aísles. Estar con amigos reduce el impacto emocional.',
+      ],
+      helpline_refs: [
+        { label: 'SíseVe (Minedu)', tel: '0800-76888', note: 'Gratuito, confidencial' },
+        { label: 'WhatsApp SíseVe', url: 'https://wa.me/51991410000' },
+        { label: 'Línea 113, opción 5', tel: '113', note: 'Apoyo psicológico' },
+      ],
+      sort_order: 3,
+    },
+    {
+      slug:     'apoyar-amigo-bullying',
+      emoji:    '🤝',
+      category: 'bullying',
+      title:    'Cómo apoyar a un amigo que sufre bullying',
+      summary:  'Tu apoyo puede cambiar el día de alguien.',
+      body_markdown: md(
+        '## Lo que ayuda',
+        '',
+        '- Escuchar sin juzgar. No digas "¿por qué no te defiendes?".',
+        '- No minimizar con "son cosas de chicos".',
+        '- Preguntarle qué necesita, no asumir.',
+        '- Acompañarlo a hablar con un adulto.',
+        '- Incluirlo en actividades. La soledad amplifica el daño.',
+        '',
+        '## Lo que no ayuda',
+        '',
+        '- Prometer que no lo contarás si hay riesgo físico o emocional.',
+        '- Enfrentar al agresor tú solo.',
+        '- Contarlo a todo el mundo sin su permiso.'
+      ),
+      action_steps: [
+        'Pregúntale cómo se siente, sin apurar la respuesta.',
+        'Ofrécele acompañarlo a hablar con un adulto de confianza.',
+        'Si hay riesgo físico, cuenta a un adulto aunque él no quiera. Su vida está primero.',
+      ],
+      helpline_refs: [
+        { label: 'Línea 113, opción 5', tel: '113', note: 'Orientación para amigos y familia' },
+      ],
+      sort_order: 4,
+    },
+
+    // ── VIOLENCIA
+    {
+      slug:     'violencia-familiar',
+      emoji:    '🏠',
+      category: 'violencia',
+      title:    'Violencia familiar: a dónde acudir',
+      summary:  'Pedir ayuda no es traicionar a tu familia. Es protegerte.',
+      body_markdown: md(
+        '## Qué es violencia familiar',
+        'No es solo golpes. También es:',
+        '',
+        '- **Psicológica:** insultos, humillaciones, amenazas, control.',
+        '- **Sexual:** cualquier acto sexual sin consentimiento.',
+        '- **Económica:** controlar el dinero, impedir trabajar o estudiar.',
+        '- **Física:** empujones, golpes, cualquier agresión al cuerpo.',
+        '',
+        '## No es tu culpa',
+        'Ninguna situación justifica la violencia. Ni tu comportamiento, ni tus notas, ni tu forma de ser.'
+      ),
+      action_steps: [
+        'Busca un lugar seguro si estás en peligro inmediato.',
+        'Llama a la Línea 100. Es gratuita, confidencial, 24/7, atiende en quechua y aimara.',
+        'Usa el Chat 100 si no puedes hablar por teléfono: chat100.mimp.gob.pe',
+        'Los Centros Emergencia Mujer (CEM) están en todas las provincias. Atención gratuita.',
+        'Habla con un adulto de confianza: profesor, tío, vecino, orientador del colegio.',
+      ],
+      helpline_refs: [
+        { label: 'Línea 100', tel: '100', note: 'MIMP, 24/7, gratuito, quechua y aimara' },
+        { label: 'Chat 100', url: 'https://chat100.mimp.gob.pe' },
+      ],
+      sort_order: 5,
+    },
+
+    // ── EMOCIONES
+    {
+      slug:     'emocion-vs-sentimiento',
+      emoji:    '💭',
+      category: 'emociones',
+      title:    'Emoción vs sentimiento: ¿cuál es la diferencia?',
+      summary:  'Las emociones son la reacción. Los sentimientos son la historia que te cuentas.',
+      body_markdown: md(
+        '## Emociones',
+        'Son reacciones básicas, automáticas y de corta duración. Las principales:',
+        '',
+        '- Alegría, tristeza, miedo, ira, sorpresa, asco.',
+        '',
+        'Aparecen en segundos y duran minutos.',
+        '',
+        '## Sentimientos',
+        'Son interpretaciones más complejas que hacemos de esas emociones. Duran más tiempo y están mediados por nuestros pensamientos.',
+        '',
+        'Ejemplos: celos, nostalgia, amor, culpa, gratitud, envidia.',
+        '',
+        '## Cómo se conectan',
+        'Algo pasa → sientes una emoción (miedo). Luego tu cabeza la interpreta → construyes un sentimiento (ansiedad, inseguridad).',
+        '',
+        'Reconocer la emoción antes del sentimiento te da poder para elegir cómo responder.'
+      ),
+      action_steps: [
+        'Cuando sientas algo intenso, pregúntate: ¿qué emoción básica hay debajo?',
+        'Nombra la emoción en voz alta. Nombrarla reduce su intensidad.',
+        'Practica respiración 4-7-8 cuando la emoción te desborde: inhala 4, sostén 7, exhala 8.',
+        'Escribe en un cuaderno qué emoción sentiste hoy y qué sentimiento construiste a partir de ella.',
+      ],
+      helpline_refs: [],
+      sort_order: 6,
+    },
+
+    // ── VALORES
+    {
+      slug:     'valores-responsabilidad',
+      emoji:    '⭐',
+      category: 'valores',
+      title:    'Responsabilidad, disciplina e iniciativa',
+      summary:  'Tres valores que cambian cómo vives tu semana.',
+      body_markdown: md(
+        '## Responsabilidad',
+        'Cumplir lo que te comprometes, asumiendo las consecuencias de tus actos. No es "hacer lo que otros quieren". Es "hacer lo que dijiste que harías".',
+        '',
+        'Ejemplo cotidiano: entregar una tarea el día acordado, aunque no te la revisen.',
+        '',
+        '## Disciplina',
+        'La constancia diaria para lograr algo, incluso cuando no tienes ganas. No es rigidez. Es elegir el largo plazo sobre la comodidad de hoy.',
+        '',
+        'Ejemplo: practicar guitarra 20 minutos diarios aunque hoy no te apetezca.',
+        '',
+        '## Iniciativa',
+        'Actuar sin que te lo pidan. Ver un problema y proponer una solución.',
+        '',
+        'Ejemplo: en lugar de esperar a que te asignen limpiar, haces lo que ves que falta.'
+      ),
+      action_steps: [
+        'Elige un solo compromiso esta semana. Uno, no diez.',
+        'Anota cada día si lo cumpliste. Marca la racha.',
+        'Cuando falle un día, no abandones todo. Vuelve al siguiente.',
+      ],
+      helpline_refs: [],
+      sort_order: 7,
+    },
+    {
+      slug:     'trabajo-equipo-comunicacion',
+      emoji:    '🤝',
+      category: 'valores',
+      title:    'Trabajo en equipo y comunicación',
+      summary:  'Nadie logra grandes cosas solo.',
+      body_markdown: md(
+        '## Trabajo en equipo',
+        'No es repartir tareas. Es escuchar las ideas de otros, ceder cuando alguien tiene mejor propuesta, y sumar en vez de competir.',
+        '',
+        'Ejemplo: en un trabajo grupal, en lugar de imponer tu idea, preguntas "¿qué piensan ustedes?".',
+        '',
+        '## Comunicación asertiva',
+        'Decir lo que piensas sin agredir y sin callarte. Tres pasos:',
+        '',
+        '1. Describe el hecho sin juzgar: "Cuando llegas tarde...".',
+        '2. Expresa cómo te afecta: "...me siento poco valorado."',
+        '3. Pide concretamente: "¿Podrías avisarme si vas a llegar tarde?".'
+      ),
+      action_steps: [
+        'En tu próximo trabajo grupal, pide la opinión de alguien que habla poco.',
+        'Practica la asertividad: describe → expresa → pide. Sin culpar.',
+        'Antes de responder con enojo, respira una vez y pregúntate: ¿qué quiero lograr con lo que voy a decir?',
+      ],
+      helpline_refs: [],
+      sort_order: 8,
+    },
+  ];
+
+  for (const w of WELLNESS) {
+    const { error } = await supa.from('wellness_resources').upsert(
+      { slug: w.slug, category: w.category, title: w.title, emoji: w.emoji,
+        summary: w.summary, body_markdown: w.body_markdown,
+        action_steps: w.action_steps, helpline_refs: w.helpline_refs,
+        sort_order: w.sort_order, active: true },
+      { onConflict: 'slug' }
+    );
+    if (error) throw new Error(`Upsert wellness_resource ${w.slug}: ${error.message}`);
+    console.log(`  • ${w.emoji} [${w.category}] ${w.title}`);
   }
 
   console.log('\n✅ seed-demo-content.ts completado.');

@@ -21,6 +21,12 @@
 - [ ] `create_user_preferences()`: agregar `SET search_path = public, pg_temp` (consistencia con otras funciones `SECURITY DEFINER`)
 - [ ] `ThemeToggle`, `ThemePicker`, `AvatarPicker`: cambiar `useRef(createBrowserClient())` → `useState(() => createBrowserClient())` para lazy init real (ya aplicado en MiMundoTab en Fase 6)
 
+## Deuda técnica — RLS de recursos
+
+- [ ] wellness_resources Y global_resources: la policy SELECT usa active=true sin excepción para admin. Un admin que desactive un recurso no podrá verlo ni reactivarlo. Fix: (active = true or is_global_admin()).
+      - wellness_resources: ya aplicado en `005_wellness_resources.sql` (pendiente de ejecutar en Supabase).
+      - global_resources: pendiente (policy "authenticated users can read active resources" en `001_schema.sql`).
+
 ## Deuda técnica — Módulo 0A Fase 5 (contraste)
 
 - [ ] Contraste marginal: minimalista dark (3.45:1) y neutro_elegante dark (3.63:1) en on-accent. Pasan el umbral UI-only (3:1) pero no el de texto normal (4.5:1). Los labels de botón son 13-15px bold — revisar si vale subir el contraste o aceptar como decisión de paleta.
@@ -42,3 +48,11 @@
 - [ ] Considerar permitir que el hijo borre respuestas de más de N semanas.
 - [ ] Considerar un modo de "solo lectura" para que el hijo vea su histórico antiguo como un diario.
 - [ ] El padre ve el histórico completo hoy. Si se vuelve privado en el futuro, agregar toggle por familia.
+
+## Pre-demo — verificación de contenido de bienestar
+- [ ] Verificar contra fuentes oficiales (minsa.gob.pe, mimp.gob.pe, minedu.gob.pe):
+      - Línea 113 opción 5
+      - WhatsApp Minsa 955 557 000 / 952 842 623
+      - SíseVe 0800-76888 y WhatsApp 991 410 000
+      - Línea 100
+      - Chat 100 (chat100.mimp.gob.pe)
