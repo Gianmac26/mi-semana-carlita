@@ -50,9 +50,13 @@
 - [ ] El padre ve el histórico completo hoy. Si se vuelve privado en el futuro, agregar toggle por familia.
 
 ## Pre-demo — verificación de contenido de bienestar
-- [ ] Verificar contra fuentes oficiales (minsa.gob.pe, mimp.gob.pe, minedu.gob.pe):
-      - Línea 113 opción 5
-      - WhatsApp Minsa 955 557 000 / 952 842 623
-      - SíseVe 0800-76888 y WhatsApp 991 410 000
-      - Línea 100
-      - Chat 100 (chat100.mimp.gob.pe)
+
+Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP, siseve.minedu.gob.pe).
+
+- [x] Línea 113 opción 5 — verificado
+- [ ] WhatsApp MINSA 955 557 000 / 952 842 623 — PENDIENTE: confirmar vigencia con llamada/mensaje de prueba (solo aparece en cobertura de una campaña puntual, no fuente permanente)
+- [x] SíseVe teléfono — CORREGIDO a (01) 615-5970 el 2026-10-10
+- [x] SíseVe WhatsApp 991 410 000 — verificado
+- [x] Línea 100 — verificado
+- [ ] Chat 100 (chat100.mimp.gob.pe) — PENDIENTE: abrir la URL a mano para confirmar que carga (el fetch automático fue bloqueado)
+- [ ] Educación Te Escucha (Minedu) — PENDIENTE: verificar WhatsApp 983 098 972, correo educacionteescucha@minedu.gob.pe, y vigencia del programa. Aparece en HelpButton pero no estaba en la lista original.

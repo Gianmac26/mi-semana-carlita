@@ -9,6 +9,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
+import { getMondayOfWeek, formatWeekKey } from '../lib/utils';
 
 // Carga .env.local sin dotenv
 // NOTA: no maneja comillas con contenido interno. Suficiente para el demo.
@@ -195,10 +196,11 @@ async function main() {
   // ── 3. mi_mundo_entries ─────────────────────────────────────────────────────
 
   console.log('\n── 3. mi_mundo_entries');
+  const currentWeekKey = formatWeekKey(getMondayOfWeek(new Date()));
   for (const e of MI_MUNDO) {
     const { error } = await supa.from('mi_mundo_entries').upsert(
-      { family_id: familyId, author_id: ids[e.tag], key: e.key, value: e.value },
-      { onConflict: 'family_id,author_id,key' }
+      { family_id: familyId, author_id: ids[e.tag], key: e.key, value: e.value, week_key: currentWeekKey },
+      { onConflict: 'family_id,author_id,key,week_key' }
     );
     if (error) throw new Error(`Upsert mi_mundo ${e.tag}.${e.key}: ${error.message}`);
     console.log(`  • ${e.tag} → ${e.key}`);
@@ -346,11 +348,11 @@ async function main() {
         'No respondas con violencia. No es cobardía, es estrategia.',
         'Guarda pruebas: capturas de pantalla, mensajes, testigos. Anota fechas.',
         'Cuéntale a un adulto de confianza: tu mamá, papá, un profesor, el auxiliar.',
-        'Reporta en SíseVe: línea gratuita 0800-76888 o WhatsApp 991 410 000.',
+        'Reporta en SíseVe: línea (01) 615-5970 o WhatsApp 991 410 000.',
         'No te aísles. Estar con amigos reduce el impacto emocional.',
       ],
       helpline_refs: [
-        { label: 'SíseVe (Minedu)', tel: '0800-76888', note: 'Gratuito, confidencial' },
+        { label: 'SíseVe (Minedu)', tel: '016155970', note: '(01) 615-5970 · Reporte gratuito y confidencial' },
         { label: 'WhatsApp SíseVe', url: 'https://wa.me/51991410000' },
         { label: 'Línea 113, opción 5', tel: '113', note: 'Apoyo psicológico' },
       ],
