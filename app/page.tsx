@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { Profile, DbTask, AppState, DayState, UserPreferences } from '@/lib/types';
+import type { Profile, DbTask, AppState, DayState, UserPreferences, TaskCompletion } from '@/lib/types';
+import type { DayKey } from '@/lib/tasks';
 import type { PaletteId, ThemeMode } from '@/lib/themes';
 import { ROLE_DEFAULT_PALETTE, DEFAULT_PALETTE } from '@/lib/themes';
 import StatusIndicator from '@/components/StatusIndicator';
@@ -18,6 +19,7 @@ import ThemePicker from '@/components/ThemePicker';
 import AvatarPicker from '@/components/AvatarPicker';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
+import TaskDetailSheet from '@/components/TaskDetailSheet';
 
 type PageState = 'loading' | 'no-profile-first' | 'no-profile-code' | 'ready';
 type Tab = 'week' | 'progress' | 'events' | 'wellness' | 'mundo' | 'admin' | 'tema';
@@ -50,6 +52,13 @@ export default function Home() {
   const [allChildrenWeeks, setAllChildrenWeeks] = useState<Record<string, AppState['weeks']>>({});
   const [familyRules,      setFamilyRules]      = useState<FamilyRule[]>([]);
   const [avatarEmoji,      setAvatarEmoji]      = useState<string | null>(null);
+  // task_completions: las del hijo activo + (padre) todas las de la familia agrupadas por user_id
+  const [completions,            setCompletions]            = useState<TaskCompletion[]>([]);
+  const [allChildrenCompletions, setAllChildrenCompletions] = useState<Record<string, TaskCompletion[]>>({});
+  // TaskDetailSheet: tarea + semana + día abiertos (la semana es la visible en WeekTab, no siempre la actual)
+  const [taskDetailTask,    setTaskDetailTask]    = useState<DbTask | null>(null);
+  const [taskDetailWeekKey, setTaskDetailWeekKey] = useState<string | null>(null);
+  const [taskDetailDay,     setTaskDetailDay]     = useState<DayKey | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -94,10 +103,12 @@ export default function Home() {
     } catch { /* storage unavailable */ }
 
     if (p.role === 'padre') {
-      const [{ data: hijoRows }, { data: weekRows }] = await Promise.all([
+      const [{ data: hijoRows }, { data: weekRows }, { data: completionRows, error: completionErr }] = await Promise.all([
         supabase.from('profiles').select('*').eq('family_id', p.family_id).eq('role', 'hijo'),
         supabase.from('weekly_state').select('*').eq('family_id', p.family_id),
+        supabase.from('task_completions').select('*').eq('family_id', p.family_id),
       ]);
+      if (completionErr) console.error('[page] task_completions:', completionErr.message);
       const hijos = (hijoRows as Profile[]) ?? [];
       setChildrenProfiles(hijos);
 
@@ -109,12 +120,24 @@ export default function Home() {
       }
       setAllChildrenWeeks(allWeeks);
 
+      const byChild: Record<string, TaskCompletion[]> = {};
+      for (const c of ((completionRows as TaskCompletion[]) ?? [])) {
+        (byChild[c.user_id] ??= []).push(c);
+      }
+      setAllChildrenCompletions(byChild);
+
       const firstChildId = hijos.length > 0 ? hijos[0].id : null;
       setSelectedChildId(firstChildId);
       setWeeks(firstChildId ? (allWeeks[firstChildId] ?? {}) : {});
+      setCompletions(firstChildId ? (byChild[firstChildId] ?? []) : []);
     } else {
-      const { data: weekRows } = await supabase
-        .from('weekly_state').select('*').eq('family_id', p.family_id).eq('user_id', p.id);
+      // Todas las semanas (igual que weekly_state): WeekTab navega semanas y ProgressTab mira 7.
+      const [{ data: weekRows }, { data: completionRows, error: completionErr }] = await Promise.all([
+        supabase.from('weekly_state').select('*').eq('family_id', p.family_id).eq('user_id', p.id),
+        supabase.from('task_completions').select('*').eq('family_id', p.family_id).eq('user_id', p.id),
+      ]);
+      if (completionErr) console.error('[page] task_completions:', completionErr.message);
+      setCompletions((completionRows as TaskCompletion[]) ?? []);
       const assembled: AppState['weeks'] = {};
       for (const row of (weekRows ?? [])) {
         if (!assembled[row.week_key]) assembled[row.week_key] = {};
@@ -128,6 +151,7 @@ export default function Home() {
   function handleSelectChild(childId: string) {
     setSelectedChildId(childId);
     setWeeks(allChildrenWeeks[childId] ?? {});
+    setCompletions(allChildrenCompletions[childId] ?? []);
   }
 
   async function handleCreateFamily() {
@@ -192,6 +216,84 @@ export default function Home() {
       }
     }, 800);
   }, [profile]);
+
+  // Evita dos requests simultáneos sobre la misma tarea/día (doble tap).
+  const togglesInFlight = useRef<Set<string>>(new Set());
+
+  async function handleToggleTask(taskId: string, weekKey: string, day: DayKey, currentlyDone: boolean) {
+    if (!profile || profile.role !== 'hijo') return;
+    const key = `${taskId}__${weekKey}__${day}`;
+    if (togglesInFlight.current.has(key)) return;
+    togglesInFlight.current.add(key);
+
+    const matches = (c: TaskCompletion) =>
+      c.task_id === taskId && c.week_key === weekKey && c.day === day;
+    setSaveStatus('saving');
+
+    if (currentlyDone) {
+      // Optimistic: quitar; si falla, reponer la fila original.
+      const removed = completions.find(matches) ?? null;
+      setCompletions(prev => prev.filter(c => !matches(c)));
+      const { error } = await supabase
+        .from('task_completions').delete()
+        .eq('task_id', taskId).eq('user_id', profile.id).eq('week_key', weekKey).eq('day', day);
+      if (error) {
+        console.error('[page] desmarcar tarea:', error.message);
+        if (removed) setCompletions(prev => [...prev.filter(c => !matches(c)), removed]);
+        setSaveStatus('error');
+      } else {
+        setSaveStatus('saved');
+      }
+    } else {
+      // Optimistic: fila temporal; se reemplaza por la real que devuelve el upsert.
+      const now = new Date().toISOString();
+      const temp: TaskCompletion = {
+        id: `temp-${key}`, task_id: taskId, family_id: profile.family_id, user_id: profile.id,
+        week_key: weekKey, day, status: 'done', evidence_url: null, notes: null,
+        completed_at: now, reviewed_at: null, reviewed_by: null, created_at: now, updated_at: now,
+      };
+      setCompletions(prev => [...prev.filter(c => !matches(c)), temp]);
+      const { data, error } = await supabase
+        .from('task_completions')
+        .upsert(
+          { task_id: taskId, family_id: profile.family_id, user_id: profile.id,
+            week_key: weekKey, day, status: 'done', completed_at: now },
+          { onConflict: 'task_id,user_id,week_key,day' },
+        )
+        .select()
+        .single();
+      if (error) {
+        console.error('[page] marcar tarea:', error.message);
+        setCompletions(prev => prev.filter(c => !matches(c)));
+        setSaveStatus('error');
+      } else {
+        setCompletions(prev => [...prev.filter(c => !matches(c)), data as TaskCompletion]);
+        setSaveStatus('saved');
+      }
+    }
+    togglesInFlight.current.delete(key);
+  }
+
+  function handleOpenTaskDetail(task: DbTask, weekKey: string, day: DayKey) {
+    setTaskDetailTask(task);
+    setTaskDetailWeekKey(weekKey);
+    setTaskDetailDay(day);
+  }
+
+  function handleCloseTaskDetail() {
+    setTaskDetailTask(null);
+    setTaskDetailWeekKey(null);
+    setTaskDetailDay(null);
+  }
+
+  // Derivados del sheet abierto: se recalculan en cada render, así el sheet refleja el toggle al instante.
+  const detailCompletion = taskDetailTask && taskDetailWeekKey && taskDetailDay
+    ? completions.find(c =>
+        c.task_id === taskDetailTask.id && c.week_key === taskDetailWeekKey && c.day === taskDetailDay) ?? null
+    : null;
+  const detailSkipped = taskDetailTask && taskDetailWeekKey && taskDetailDay
+    ? !!((weeks[taskDetailWeekKey]?.[taskDetailDay] as DayState | undefined)?.skipped as Record<string, boolean> | undefined)?.[taskDetailTask.slug]
+    : false;
 
   async function handleSignOut() {
     await supabase.auth.signOut();
@@ -311,6 +413,10 @@ export default function Home() {
           </div>
         </div>
         {tab === 'week'     && <WeekTab weeks={weeks} tasks={tasks} onChange={handleWeeksChange}
+          completions={completions}
+          role={profile?.role === 'padre' ? 'padre' : 'hijo'}
+          onToggleTask={handleToggleTask}
+          onOpenDetail={handleOpenTaskDetail}
           childDisplayName={
             profile?.role === 'hijo'
               ? profile.display_name
@@ -322,7 +428,7 @@ export default function Home() {
               : <GoldenRules rules={familyRules} />
           }
         />}
-        {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} />}
+        {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} completions={completions} />}
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'wellness' && <WellnessTab />}
         {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
@@ -360,6 +466,20 @@ export default function Home() {
 
       {/* HelpButton — always visible, above bottom nav */}
       <HelpButton />
+
+      <TaskDetailSheet
+        task={taskDetailTask}
+        day={taskDetailDay}
+        role={profile?.role === 'padre' ? 'padre' : 'hijo'}
+        completion={detailCompletion}
+        skipped={detailSkipped}
+        onClose={handleCloseTaskDetail}
+        onToggle={() => {
+          if (taskDetailTask && taskDetailWeekKey && taskDetailDay) {
+            handleToggleTask(taskDetailTask.id, taskDetailWeekKey, taskDetailDay, detailCompletion !== null);
+          }
+        }}
+      />
     </>
   );
 }

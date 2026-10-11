@@ -1,41 +1,55 @@
 'use client';
+import type { TaskCompletion } from '@/lib/types';
 
 interface TaskShape { slug: string; icon: string; label: string; time: string; skippable?: boolean }
 
 interface Props {
   task: TaskShape;
-  checked: boolean;
+  completion: TaskCompletion | null;
   skipped: boolean;
+  role: 'padre' | 'hijo';
   onToggle: () => void;
   onSkip: () => void;
+  onOpenDetail: () => void;
 }
 
-export default function TaskItem({ task, checked, skipped, onToggle, onSkip }: Props) {
+export default function TaskItem({ task, completion, skipped, role, onToggle, onSkip, onOpenDetail }: Props) {
+  const checked = completion !== null;
+  const canToggle = role === 'hijo' && !skipped;
+
   return (
     <div style={{ marginBottom: 8 }}>
       <div
-        onClick={() => !skipped && onToggle()}
+        onClick={() => canToggle && onToggle()}
         style={{
           display: 'flex', alignItems: 'center', gap: 12,
           padding: '14px 16px', borderRadius: skipped ? '16px 16px 0 0' : 16,
           background: skipped ? 'var(--line)' : 'var(--bg-card)',
-          border: `1.5px solid ${skipped ? 'var(--line)' : 'var(--line)'}`,
+          border: '1.5px solid var(--line)',
           borderBottom: skipped ? 'none' : undefined,
-          cursor: skipped ? 'default' : 'pointer',
+          cursor: canToggle ? 'pointer' : 'default',
           opacity: skipped ? 0.6 : checked ? 0.55 : 1,
           transition: 'all 0.15s',
           boxShadow: skipped ? 'none' : '0 1px 4px rgba(0,0,0,0.05)',
           userSelect: 'none',
         }}
       >
-        {/* Checkbox */}
-        <div style={{
-          width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-          border: (checked && !skipped) ? 'none' : '2.5px solid var(--line)',
-          background: (checked && !skipped) ? 'var(--ok)' : 'transparent',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.15s',
-        }}>
+        {/* Checkbox (para el padre es solo indicador de estado: no interactivo y atenuado) */}
+        <div
+          role="checkbox"
+          aria-checked={checked && !skipped}
+          aria-label={task.label}
+          aria-disabled={role === 'padre' ? true : undefined}
+          style={{
+            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+            border: (checked && !skipped) ? 'none' : '2.5px solid var(--line)',
+            background: (checked && !skipped) ? 'var(--ok)' : 'transparent',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.15s',
+            pointerEvents: role === 'padre' ? 'none' : undefined,
+            opacity: role === 'padre' ? 0.7 : undefined,
+          }}
+        >
           {checked && !skipped && <span style={{ color: 'var(--on-accent)', fontSize: 16, lineHeight: 1 }}>✓</span>}
         </div>
 
@@ -65,10 +79,31 @@ export default function TaskItem({ task, checked, skipped, onToggle, onSkip }: P
             N/A
           </span>
         )}
+
+        {/* Detalle — target de 44px; margen negativo para no agrandar la fila */}
+        <button
+          onClick={e => { e.stopPropagation(); onOpenDetail(); }}
+          aria-label={`Ver detalle de ${task.label}`}
+          aria-haspopup="dialog"
+          style={{
+            width: 44, height: 44, flexShrink: 0, margin: '-8px -10px -8px -4px',
+            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <span style={{
+            width: 24, height: 24, borderRadius: '50%',
+            border: '1.5px solid var(--line)', color: 'var(--ink-soft)',
+            fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, lineHeight: 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            i
+          </span>
+        </button>
       </div>
 
-      {/* "Me quedé en casa" toggle — only for skippable tasks */}
-      {task.skippable && (
+      {/* "Me quedé en casa" toggle — solo tareas skippable y solo el hijo */}
+      {task.skippable && role === 'hijo' && (
         <button
           onClick={onSkip}
           style={{
@@ -86,6 +121,20 @@ export default function TaskItem({ task, checked, skipped, onToggle, onSkip }: P
           <span>{skipped ? '✓' : '🏠'}</span>
           {skipped ? 'Me quedé en casa (no cuenta para el %)'  : 'Me quedé en casa'}
         </button>
+      )}
+
+      {/* Padre: estado de "Me quedé en casa" en solo lectura (cierra la fila redondeada) */}
+      {task.skippable && role === 'padre' && skipped && (
+        <div style={{
+          padding: '7px 16px', borderRadius: '0 0 16px 16px',
+          border: '1.5px solid var(--line)', borderTop: 'none',
+          background: 'var(--teal-soft)', color: 'var(--teal)',
+          fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 12,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span>✓</span>
+          Se quedó en casa (no cuenta para el %)
+        </div>
       )}
     </div>
   );

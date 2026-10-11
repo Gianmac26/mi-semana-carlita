@@ -1,4 +1,4 @@
-import type { DbTask } from '@/lib/types';
+import type { DbTask, TaskCompletion } from '@/lib/types';
 
 // Legacy seed data — used only by the migration script
 export interface Task {
@@ -36,15 +36,40 @@ export function getTasksForDayFromList(tasks: DbTask[], day: DayKey): DbTask[] {
   return tasks.filter(t => t.active && t.days.includes(day));
 }
 
-/** Calculates completion % for one day given dynamic tasks from DB. */
+/**
+ * % de cumplimiento de un día (0..100).
+ * - Sin tareas → 0.
+ * - Las saltadas ("Me quedé en casa") no cuentan; si todas están saltadas → 100.
+ * - Hechas = las que están en completedTaskIds (task_completions).
+ */
 export function getDayCompletion(
-  dayState: Record<string, unknown> | undefined,
+  completedTaskIds: ReadonlySet<string>,
+  skippedTaskSlugs: ReadonlySet<string>,
   tasks: DbTask[],
 ): number {
-  if (!tasks.length || !dayState) return 0;
-  const skipped = (dayState.skipped ?? {}) as Record<string, boolean>;
-  const active = tasks.filter(t => !skipped[t.slug]);
+  if (!tasks.length) return 0;
+  const active = tasks.filter(t => !skippedTaskSlugs.has(t.slug));
   if (!active.length) return 100;
-  const done = active.filter(t => dayState[t.slug] === true).length;
+  const done = active.filter(t => completedTaskIds.has(t.id)).length;
   return Math.round((done / active.length) * 100);
 }
+
+/** Agrupa las completions de UNA semana por día: day → Set<task_id>. */
+export function completedIdsByDay(completions: TaskCompletion[], weekKey: string): Map<string, Set<string>> {
+  const map = new Map<string, Set<string>>();
+  for (const c of completions) {
+    if (c.week_key !== weekKey) continue;
+    const set = map.get(c.day) ?? new Set<string>();
+    set.add(c.task_id);
+    map.set(c.day, set);
+  }
+  return map;
+}
+
+/** Slugs saltados de un día, leídos del JSONB de weekly_state (`skipped` sigue ahí). */
+export function getSkippedSlugs(dayState: Record<string, unknown> | undefined): Set<string> {
+  const skipped = (dayState?.skipped ?? {}) as Record<string, boolean>;
+  return new Set(Object.keys(skipped).filter(slug => skipped[slug]));
+}
+
+export const EMPTY_SET: ReadonlySet<string> = new Set<string>();

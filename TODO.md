@@ -66,3 +66,14 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 - [x] Seed corrido: 8 fichas insertadas (verificado 2026-10-10)
 - [x] Distribución: crisis 1, tca 1, bullying 2, violencia 1, emociones 1, valores 2
 - [x] Tab "💚 Bienestar" desplegada en producción (commit cccc56b)
+
+## Task completions — deuda Fase 2
+- [ ] Al implementar aprobación/rechazo: la UI debe bloquear el toggle de tareas
+      aprobadas en TaskItem y TaskDetailSheet. El RLS ya lo impide (update policy
+      exige status='done'), pero la UI debe mostrar el estado "Aprobada" sin permitir
+      desmarcar. Sin esto, el hijo intentará desmarcar y recibirá un error de RLS
+      en vez de feedback visual.
+
+## Task completions — deuda post-Fase 1
+- [ ] Limitar la query de `task_completions` a las últimas 8 semanas cuando haya historial real (hoy carga todo, igual que weekly_state).
+- [ ] Sin backfill, las tareas marcadas en el JSONB de demo aparecen sin marcar tras el despliegue. Aceptable: los datos demo no importan. No repetir el problema cuando existan familias reales.

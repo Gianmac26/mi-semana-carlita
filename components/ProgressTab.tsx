@@ -1,47 +1,75 @@
 'use client';
 import { useState } from 'react';
 import { AppState } from '@/lib/types';
-import type { DbTask } from '@/lib/types';
-import { DAY_KEYS, DayKey, getDayCompletion, getTasksForDayFromList } from '@/lib/tasks';
+import type { DbTask, TaskCompletion } from '@/lib/types';
+import {
+  DayKey, EMPTY_SET,
+  completedIdsByDay, getDayCompletion, getSkippedSlugs, getTasksForDayFromList,
+} from '@/lib/tasks';
 import { getMondayOfWeek, formatWeekKey, formatDateRange } from '@/lib/utils';
 
-interface Props { state: AppState; tasks: DbTask[] }
+interface Props {
+  state: AppState;
+  tasks: DbTask[];
+  /** Completions del hijo activo (todas las semanas cargadas). */
+  completions: TaskCompletion[];
+}
 
 const CHART_DAYS: DayKey[]  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 const CHART_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const NOTE_DAYS: DayKey[]   = ['mon', 'tue', 'wed', 'thu', 'fri'];
 const NOTE_LABELS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
-function weekAvg(wd: Record<string, unknown>, tasks: DbTask[], upToIdx: number | null): number {
+/** % de un día de una semana: hechas desde task_completions, saltadas desde weekly_state. */
+function dayPct(
+  wd: Record<string, unknown>,
+  doneByDay: Map<string, Set<string>>,
+  tasks: DbTask[],
+  day: DayKey,
+): number {
+  return getDayCompletion(
+    doneByDay.get(day) ?? EMPTY_SET,
+    getSkippedSlugs(wd[day] as Record<string, unknown> | undefined),
+    getTasksForDayFromList(tasks, day),
+  );
+}
+
+function weekAvg(
+  wd: Record<string, unknown>,
+  doneByDay: Map<string, Set<string>>,
+  tasks: DbTask[],
+  upToIdx: number | null,
+): number {
   const days: DayKey[] = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const slice = upToIdx === null ? days : days.slice(0, upToIdx + 1);
   const withTasks = slice.filter(d => getTasksForDayFromList(tasks, d).length > 0);
   if (!withTasks.length) return 0;
-  const sum = withTasks.reduce((acc, d) => {
-    const t = getTasksForDayFromList(tasks, d);
-    return acc + getDayCompletion(wd[d] as Record<string, unknown>, t);
-  }, 0);
+  const sum = withTasks.reduce((acc, d) => acc + dayPct(wd, doneByDay, tasks, d), 0);
   return Math.round(sum / withTasks.length);
 }
 
-export default function ProgressTab({ state, tasks }: Props) {
+export default function ProgressTab({ state, tasks, completions }: Props) {
   const today = new Date();
   const [monday] = useState(() => getMondayOfWeek(today));
   const weekKey  = formatWeekKey(monday);
   const weekData = (state.weeks[weekKey] ?? {}) as Record<string, unknown>;
+  const doneThisWeek = completedIdsByDay(completions, weekKey);
 
   // today's index in chart (0=Mon…5=Sat, -1=Sun)
   const rawDay = today.getDay(); // 0=Sun,1=Mon…6=Sat
   const todayChartIdx = rawDay === 0 ? -1 : rawDay - 1;
 
-  // Past weeks (up to 6 that have any data)
+  // Past weeks (up to 6 that have any data: weekly_state o completions)
   const pastWeeks = Array.from({ length: 6 }, (_, i) => {
     const m = new Date(monday);
     m.setDate(m.getDate() - (i + 1) * 7);
     const wk = formatWeekKey(m);
     const wd = (state.weeks[wk] ?? {}) as Record<string, unknown>;
-    return { monday: m, weekKey: wk, wd, avg: weekAvg(wd, tasks, null) };
-  }).filter(w => Object.keys(w.wd).length > 0);
+    const done = completedIdsByDay(completions, wk);
+    return { monday: m, weekKey: wk, wd, hasData: Object.keys(wd).length > 0 || done.size > 0, avg: weekAvg(wd, done, tasks, null) };
+  }).filter(w => w.hasData);
+
+  const hasDataThisWeek = Object.keys(weekData).length > 0 || doneThisWeek.size > 0;
 
   return (
     <div>
@@ -62,7 +90,7 @@ export default function ProgressTab({ state, tasks }: Props) {
           {CHART_DAYS.map((day, i) => {
             const isPastOrToday = i <= todayChartIdx;
             const pct = isPastOrToday
-              ? getDayCompletion(weekData[day] as Record<string, unknown>, getTasksForDayFromList(tasks, day))
+              ? dayPct(weekData, doneThisWeek, tasks, day)
               : null;
             const barH = pct !== null ? Math.max(4, pct) : 0;
             const barColor = pct === null ? 'transparent'
@@ -176,7 +204,7 @@ export default function ProgressTab({ state, tasks }: Props) {
         </section>
       )}
 
-      {pastWeeks.length === 0 && Object.keys(weekData).length === 0 && (
+      {pastWeeks.length === 0 && !hasDataThisWeek && (
         <p style={{
           textAlign: 'center', color: 'var(--ink-soft)',
           fontStyle: 'italic', padding: '24px 0',

@@ -118,3 +118,24 @@ export interface GlobalResource {
   body_markdown: string;
   emoji: string;
 }
+
+// ── Task completions (Módulo 1 — Fase 1) ─────────────────────────────────────
+
+export type CompletionStatus = 'done' | 'approved' | 'rejected';
+
+export interface TaskCompletion {
+  id: string;
+  task_id: string;
+  family_id: string;
+  user_id: string;
+  week_key: string;
+  day: string;
+  status: CompletionStatus;
+  evidence_url: string | null;
+  notes: string | null;
+  completed_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}

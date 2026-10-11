@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AppState, DayState } from '@/lib/types';
-import type { DbTask } from '@/lib/types';
-import { DAY_KEYS, DayKey, getTasksForDayFromList, getDayCompletion } from '@/lib/tasks';
+import type { DbTask, TaskCompletion } from '@/lib/types';
+import { DAY_KEYS, DayKey, getDayCompletion, getSkippedSlugs, getTasksForDayFromList } from '@/lib/tasks';
 import { getMondayOfWeek, formatWeekKey, getTodayDayKey } from '@/lib/utils';
 import WeekSelector from './WeekSelector';
 import DayChips from './DayChips';
@@ -11,7 +11,12 @@ import TaskItem from './TaskItem';
 interface Props {
   weeks: AppState['weeks'];
   tasks: DbTask[];
+  /** Completions del hijo activo (todas las semanas cargadas); se filtran por la semana visible. */
+  completions: TaskCompletion[];
+  role: 'padre' | 'hijo';
   onChange: (weekKey: string, day: string, dayState: DayState) => void;
+  onToggleTask: (taskId: string, weekKey: string, day: DayKey, currentlyDone: boolean) => void;
+  onOpenDetail: (task: DbTask, weekKey: string, day: DayKey) => void;
   childDisplayName?: string;
   rulesSlot?: React.ReactNode;
 }
@@ -25,7 +30,9 @@ const INPUT: React.CSSProperties = {
   outline: 'none',
 };
 
-export default function WeekTab({ weeks, tasks, onChange, childDisplayName, rulesSlot }: Props) {
+export default function WeekTab({
+  weeks, tasks, completions, role, onChange, onToggleTask, onOpenDetail, childDisplayName, rulesSlot,
+}: Props) {
   const todayKey = getTodayDayKey();
   const [monday, setMonday] = useState<Date>(() => getMondayOfWeek(new Date()));
   const [selectedDay, setSelectedDay] = useState<DayKey>(() => {
@@ -37,14 +44,27 @@ export default function WeekTab({ weeks, tasks, onChange, childDisplayName, rule
   const weekData = weeks[weekKey] ?? {};
   const dayState = (weekData[selectedDay] ?? {}) as DayState;
   const dayTasks = getTasksForDayFromList(tasks, selectedDay);
-  const pct      = getDayCompletion(dayState as Record<string, unknown>, dayTasks);
   const isWeekday = !['sat', 'sun'].includes(selectedDay);
+
+  // Clave `${task_id}__${day}` → acceso O(1). Solo la semana visible.
+  const completionsMap = useMemo(() => {
+    const map = new Map<string, TaskCompletion>();
+    for (const c of completions) {
+      if (c.week_key === weekKey) map.set(`${c.task_id}__${c.day}`, c);
+    }
+    return map;
+  }, [completions, weekKey]);
+
+  const skippedMap = (dayState.skipped ?? {}) as Record<string, boolean>;
+  const pct = getDayCompletion(
+    new Set(dayTasks.filter(t => completionsMap.has(`${t.id}__${selectedDay}`)).map(t => t.id)),
+    getSkippedSlugs(dayState as Record<string, unknown>),
+    dayTasks,
+  );
 
   const updateDay = (patch: Partial<DayState>) => {
     onChange(weekKey, selectedDay, { ...dayState, ...patch } as DayState);
   };
-
-  const toggleTask = (id: string) => updateDay({ [id]: !dayState[id] });
 
   const toggleSkip = (id: string) => {
     const prev = (dayState.skipped ?? {}) as Record<string, boolean>;
@@ -61,8 +81,10 @@ export default function WeekTab({ weeks, tasks, onChange, childDisplayName, rule
     <div>
       <WeekSelector monday={monday} onChange={setMonday} />
       <DayChips
+        weekKey={weekKey}
         weekData={weekData}
         tasks={tasks}
+        completions={completions}
         selected={selectedDay}
         onSelect={setSelectedDay}
         todayKey={todayKey}
@@ -93,15 +115,18 @@ export default function WeekTab({ weeks, tasks, onChange, childDisplayName, rule
               </span>
             </div>
             {dayTasks.map(task => {
-              const skipped = !!((dayState.skipped as Record<string,boolean> | undefined)?.[task.slug]);
+              const skipped = !!skippedMap[task.slug];
+              const completion = completionsMap.get(`${task.id}__${selectedDay}`) ?? null;
               return (
                 <TaskItem
                   key={task.slug}
                   task={task}
-                  checked={!!dayState[task.slug]}
+                  completion={completion}
                   skipped={skipped}
-                  onToggle={() => toggleTask(task.slug)}
+                  role={role}
+                  onToggle={() => onToggleTask(task.id, weekKey, selectedDay, completion !== null)}
                   onSkip={() => toggleSkip(task.slug)}
+                  onOpenDetail={() => onOpenDetail(task, weekKey, selectedDay)}
                 />
               );
             })}

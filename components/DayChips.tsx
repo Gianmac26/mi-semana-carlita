@@ -1,21 +1,34 @@
 'use client';
-import { DAY_KEYS, DAY_LABELS, DayKey, getDayCompletion, getTasksForDayFromList } from '@/lib/tasks';
-import type { DbTask, WeekData } from '@/lib/types';
+import { useMemo } from 'react';
+import {
+  DAY_KEYS, DAY_LABELS, DayKey, EMPTY_SET,
+  completedIdsByDay, getDayCompletion, getSkippedSlugs, getTasksForDayFromList,
+} from '@/lib/tasks';
+import type { DbTask, TaskCompletion, WeekData } from '@/lib/types';
 
 interface Props {
+  weekKey: string;
   weekData: WeekData;
   tasks: DbTask[];
+  /** Completions del hijo activo; se filtran por weekKey. */
+  completions: TaskCompletion[];
   selected: DayKey;
   onSelect: (d: DayKey) => void;
   todayKey: string;
 }
 
-export default function DayChips({ weekData, tasks, selected, onSelect, todayKey }: Props) {
+export default function DayChips({ weekKey, weekData, tasks, completions, selected, onSelect, todayKey }: Props) {
+  const doneByDay = useMemo(() => completedIdsByDay(completions, weekKey), [completions, weekKey]);
+
   return (
     <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 2px 6px' }}>
       {DAY_KEYS.map(day => {
         const dayTasks = getTasksForDayFromList(tasks, day);
-        const pct = getDayCompletion(weekData[day] as Record<string, unknown>, dayTasks);
+        const pct = getDayCompletion(
+          doneByDay.get(day) ?? EMPTY_SET,
+          getSkippedSlugs(weekData[day] as Record<string, unknown> | undefined),
+          dayTasks,
+        );
         const isToday = day === todayKey;
         const isSel = selected === day;
         const dotColor = !dayTasks.length
