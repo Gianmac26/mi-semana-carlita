@@ -1,5 +1,7 @@
 'use client';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import BottomSheet from '@/components/BottomSheet';
+import { useHelpSheet } from '@/components/HelpSheetProvider';
 
 // ── Líneas de ayuda verificadas ────────────────────────────────────────────
 
@@ -49,7 +51,7 @@ const HELPLINES: Helpline[] = [
     name: 'SíseVe',
     org: 'Minedu',
     description: 'Bullying y violencia escolar',
-    phone: '0800-76888', phoneTel: '080076888',
+    phone: '(01) 615-5970', phoneTel: '016155970',
     note: 'Reporte gratuito',
     whatsapp: [{ display: '991 410 000', tel: '51991410000' }],
     chat: 'https://www.siseve.minedu.gob.pe',
@@ -338,12 +340,14 @@ function HelplineCard({ line }: { line: Helpline }) {
 }
 
 // ── Main HelpButton component ──────────────────────────────────────────────
+// El estado abierto/cerrado vive en HelpSheetProvider para que otros
+// componentes (p. ej. el banner de WellnessTab) puedan abrir el mismo sheet.
 
 export default function HelpButton() {
-  const [open, setOpen]         = useState(false);
+  const { isOpen, open, close: closeSheet } = useHelpSheet();
   const [breathMode, setBrMode] = useState(false);
 
-  const close = () => { setOpen(false); setBrMode(false); };
+  const close = useCallback(() => { closeSheet(); setBrMode(false); }, [closeSheet]);
 
   // Cache helpline data in localStorage for offline access
   useEffect(() => {
@@ -356,7 +360,7 @@ export default function HelpButton() {
     <>
       {/* Floating trigger button */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={open}
         aria-label="Abrir recursos de ayuda"
         aria-haspopup="dialog"
         style={{
@@ -381,120 +385,64 @@ export default function HelpButton() {
         💙
       </button>
 
-      {/* Backdrop */}
-      {open && (
-        <div
-          onClick={close}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            backdropFilter: 'blur(2px)',
-            zIndex: 300,
-          }}
-        />
-      )}
-
-      {/* Bottom sheet */}
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Recursos de ayuda"
-          style={{
-            position: 'fixed', bottom: 0, left: 0, right: 0,
-            background: 'var(--bg-card)',
-            borderRadius: '24px 24px 0 0',
-            paddingBottom: 'env(safe-area-inset-bottom)',
-            zIndex: 301,
-            maxHeight: '90dvh',
-            overflowY: 'auto',
-            boxShadow: '0 -8px 40px rgba(0,0,0,0.22)',
-          }}
-        >
-          {/* Handle */}
-          <div style={{
-            display: 'flex', justifyContent: 'center',
-            padding: '12px 0 8px',
-          }}>
+      <BottomSheet
+        open={isOpen}
+        onClose={close}
+        zIndex={400}
+        title="💙 No estás sola"
+        ariaLabel="Recursos de ayuda"
+      >
+        {breathMode ? (
+          <BreathingGuide onStop={() => setBrMode(false)} />
+        ) : (
+          <>
+            {/* Empathetic message */}
             <div style={{
-              width: 40, height: 4, borderRadius: 2,
-              background: 'var(--line)',
-            }} />
-          </div>
-
-          <div style={{ padding: '4px 20px 32px' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 20, color: 'var(--ink)', margin: 0 }}>
-                💙 No estás sola
-              </h3>
-              <button
-                onClick={close}
-                aria-label="Cerrar"
-                style={{
-                  background: 'var(--line)', border: 'none', borderRadius: '50%',
-                  width: 32, height: 32, cursor: 'pointer',
-                  color: 'var(--ink-soft)', fontSize: 18, lineHeight: 1,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                ×
-              </button>
+              background: 'var(--lilac-soft)', borderRadius: 16,
+              padding: '14px 16px', marginBottom: 16,
+            }}>
+              <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink)', margin: 0 }}>
+                Buscar ayuda es un acto de valentía.{' '}
+                <strong>Si estás pasando un momento difícil, hay personas capacitadas esperando tu llamada.</strong>{' '}
+                No tienes que manejarlo sola.
+              </p>
             </div>
 
-            {breathMode ? (
-              <BreathingGuide onStop={() => setBrMode(false)} />
-            ) : (
-              <>
-                {/* Empathetic message */}
-                <div style={{
-                  background: 'var(--lilac-soft)', borderRadius: 16,
-                  padding: '14px 16px', marginBottom: 16,
-                }}>
-                  <p style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink)', margin: 0 }}>
-                    Buscar ayuda es un acto de valentía.{' '}
-                    <strong>Si estás pasando un momento difícil, hay personas capacitadas esperando tu llamada.</strong>{' '}
-                    No tienes que manejarlo sola.
-                  </p>
-                </div>
+            {/* Breathing button — first option */}
+            <button
+              onClick={() => setBrMode(true)}
+              style={{
+                width: '100%', minHeight: 56, padding: '14px 16px', marginBottom: 20,
+                borderRadius: 16, border: '1.5px solid var(--teal)',
+                background: 'var(--teal-soft)',
+                color: 'var(--teal)',
+                fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 10,
+              }}
+            >
+              <span style={{ fontSize: 24 }}>🌬️</span>
+              <div style={{ textAlign: 'left' }}>
+                <div>Necesito calmarme</div>
+                <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.8 }}>Respiración guiada 4-7-8 · 1 minuto</div>
+              </div>
+            </button>
 
-                {/* Breathing button — first option */}
-                <button
-                  onClick={() => setBrMode(true)}
-                  style={{
-                    width: '100%', minHeight: 56, padding: '14px 16px', marginBottom: 20,
-                    borderRadius: 16, border: '1.5px solid var(--teal)',
-                    background: 'var(--teal-soft)',
-                    color: 'var(--teal)',
-                    fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15,
-                    cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', gap: 10,
-                  }}
-                >
-                  <span style={{ fontSize: 24 }}>🌬️</span>
-                  <div style={{ textAlign: 'left' }}>
-                    <div>Necesito calmarme</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.8 }}>Respiración guiada 4-7-8 · 1 minuto</div>
-                  </div>
-                </button>
-
-                {/* Helplines */}
-                <p style={{
-                  fontSize: 11, color: 'var(--ink-soft)', fontWeight: 700,
-                  textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12,
-                }}>
-                  Líneas de ayuda gratuitas
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {HELPLINES.map((line, i) => (
-                    <HelplineCard key={i} line={line} />
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+            {/* Helplines */}
+            <p style={{
+              fontSize: 11, color: 'var(--ink-soft)', fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12,
+            }}>
+              Líneas de ayuda gratuitas
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {HELPLINES.map((line, i) => (
+                <HelplineCard key={i} line={line} />
+              ))}
+            </div>
+          </>
+        )}
+      </BottomSheet>
     </>
   );
 }

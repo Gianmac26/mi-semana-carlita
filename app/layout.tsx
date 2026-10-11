@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { HelpSheetProvider } from '@/components/HelpSheetProvider';
 
 export const metadata: Metadata = {
   title: 'Mi Semana',
@@ -24,7 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: `try{var p=localStorage.getItem('mi-semana-palette')||'vibrante';var m=localStorage.getItem('mi-semana-mode');document.documentElement.setAttribute('data-palette',p);if(m&&m!=='auto')document.documentElement.setAttribute('data-mode',m);}catch(e){}` }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <HelpSheetProvider>{children}</HelpSheetProvider>
+      </body>
     </html>
   );
 }

@@ -8,7 +8,7 @@ import StatusIndicator from '@/components/StatusIndicator';
 import WeekTab from '@/components/WeekTab';
 import ProgressTab from '@/components/ProgressTab';
 import EventsTab from '@/components/EventsTab';
-import ArticlesTab from '@/components/ArticlesTab';
+import WellnessTab from '@/components/WellnessTab';
 import MiMundoTab from '@/components/MiMundoTab';
 import AdminTab from '@/components/AdminTab';
 import GoldenRules from '@/components/GoldenRules';
@@ -20,13 +20,13 @@ import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
 
 type PageState = 'loading' | 'no-profile-first' | 'no-profile-code' | 'ready';
-type Tab = 'week' | 'progress' | 'events' | 'articles' | 'mundo' | 'admin' | 'tema';
+type Tab = 'week' | 'progress' | 'events' | 'wellness' | 'mundo' | 'admin' | 'tema';
 
 const BASE_TABS: { key: Tab; label: string }[] = [
   { key: 'week',     label: '📅 Semana' },
   { key: 'progress', label: '📈 Progreso' },
   { key: 'events',   label: '🎈 Eventos' },
-  { key: 'articles', label: '📚 Para ti' },
+  { key: 'wellness', label: '💚 Bienestar' },
   { key: 'mundo',    label: '💜 Mi mundo' },
   { key: 'tema',     label: '🎨 Personalizar' },
 ];
@@ -251,7 +251,7 @@ export default function Home() {
   const HIJO_NAV: NavItem[] = [
     { key: 'week',     icon: '📅', label: 'Semana'   },
     { key: 'mundo',    icon: '💜', label: 'Mi mundo'  },
-    { key: 'articles', icon: '💡', label: 'Bienestar' },
+    { key: 'wellness', icon: '💚', label: 'Bienestar' },
     { key: 'progress', icon: '📊', label: 'Logros'    },
     { key: 'events',   icon: '🎈', label: 'Eventos'   },
     { key: 'tema',     icon: '🎨', label: 'Personalizar' },
@@ -262,7 +262,7 @@ export default function Home() {
     { key: 'mundo',    icon: '💜', label: 'Mi mundo'  },
     { key: 'progress', icon: '📊', label: 'Logros'    },
     { key: 'events',   icon: '🎈', label: 'Eventos'   },
-    { key: 'articles', icon: '💡', label: 'Bienestar' },
+    { key: 'wellness', icon: '💚', label: 'Bienestar' },
     { key: 'tema',     icon: '🎨', label: 'Personalizar' },
   ];
   const navItems = isAdmin ? PADRE_NAV : HIJO_NAV;
@@ -324,7 +324,7 @@ export default function Home() {
         />}
         {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} />}
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
-        {tab === 'articles' && <ArticlesTab />}
+        {tab === 'wellness' && <WellnessTab />}
         {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'tema' && profile && (
           <>

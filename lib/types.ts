@@ -85,3 +85,36 @@ export interface UserPreferences {
   avatar_type: 'preset' | 'photo';
   updated_at: string;
 }
+
+// ── Bienestar (Módulo 2 — Fase 3) ────────────────────────────────────────────
+
+export type WellnessCategory = 'crisis' | 'tca' | 'bullying' | 'violencia' | 'emociones' | 'valores';
+
+export interface HelplineRef {
+  label: string;
+  tel?: string;
+  url?: string;
+  note?: string;
+}
+
+export interface WellnessResource {
+  id: string;
+  slug: string;
+  category: WellnessCategory;
+  title: string;
+  emoji: string;
+  summary: string;
+  body_markdown: string;
+  action_steps: string[];
+  helpline_refs: HelplineRef[];
+  sort_order: number;
+}
+
+export interface GlobalResource {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string;
+  body_markdown: string;
+  emoji: string;
+}
