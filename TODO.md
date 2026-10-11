@@ -60,3 +60,9 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 - [x] Línea 100 — verificado
 - [ ] Chat 100 (chat100.mimp.gob.pe) — PENDIENTE: abrir la URL a mano para confirmar que carga (el fetch automático fue bloqueado)
 - [ ] Educación Te Escucha (Minedu) — PENDIENTE: verificar WhatsApp 983 098 972, correo educacionteescucha@minedu.gob.pe, y vigencia del programa. Aparece en HelpButton pero no estaba en la lista original.
+
+## Bienestar (Módulo 2, Fase 3) — estado
+- [x] Migración 005 aplicada en Supabase (verificado 2026-10-10)
+- [x] Seed corrido: 8 fichas insertadas (verificado 2026-10-10)
+- [x] Distribución: crisis 1, tca 1, bullying 2, violencia 1, emociones 1, valores 2
+- [x] Tab "💚 Bienestar" desplegada en producción (commit cccc56b)
