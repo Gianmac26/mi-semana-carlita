@@ -14,8 +14,18 @@ interface Props {
 }
 
 export default function TaskItem({ task, completion, skipped, role, onToggle, onSkip, onOpenDetail }: Props) {
-  const checked = completion !== null;
-  const canToggle = role === 'hijo' && !skipped;
+  const isDone     = completion?.status === 'done';
+  const isApproved = completion?.status === 'approved';
+  const isRejected = completion?.status === 'rejected';
+  // Rechazada NO cuenta como marcada: el hijo la vuelve a marcar (fresh start).
+  const checked   = isDone || isApproved;
+  // Aprobada queda fija: no se puede desmarcar (el trigger/RLS también lo impiden).
+  const canToggle = role === 'hijo' && !skipped && !isApproved;
+
+  // Franja izquierda solo para estados revisados; sin cambios de fondo.
+  const accent = skipped ? null : isApproved ? 'var(--ok)' : isRejected ? 'var(--yellow)' : null;
+
+  const statusLabel = isApproved ? 'aprobada' : isRejected ? 'rechazada, revisa el motivo' : null;
 
   return (
     <div style={{ marginBottom: 8 }}>
@@ -23,9 +33,12 @@ export default function TaskItem({ task, completion, skipped, role, onToggle, on
         onClick={() => canToggle && onToggle()}
         style={{
           display: 'flex', alignItems: 'center', gap: 12,
-          padding: '14px 16px', borderRadius: skipped ? '16px 16px 0 0' : 16,
+          // Con franja de 4px se compensa el padding para que el contenido no se mueva.
+          padding: accent ? '14px 16px 14px 13.5px' : '14px 16px',
+          borderRadius: skipped ? '16px 16px 0 0' : 16,
           background: skipped ? 'var(--line)' : 'var(--bg-card)',
           border: '1.5px solid var(--line)',
+          borderLeft: accent ? `4px solid ${accent}` : undefined,
           borderBottom: skipped ? 'none' : undefined,
           cursor: canToggle ? 'pointer' : 'default',
           opacity: skipped ? 0.6 : checked ? 0.55 : 1,
@@ -38,19 +51,33 @@ export default function TaskItem({ task, completion, skipped, role, onToggle, on
         <div
           role="checkbox"
           aria-checked={checked && !skipped}
-          aria-label={task.label}
-          aria-disabled={role === 'padre' ? true : undefined}
+          aria-label={statusLabel ? `${task.label} (${statusLabel})` : task.label}
+          aria-disabled={role === 'padre' || isApproved ? true : undefined}
           style={{
             width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-            border: (checked && !skipped) ? 'none' : '2.5px solid var(--line)',
-            background: (checked && !skipped) ? 'var(--ok)' : 'transparent',
+            border: skipped ? '2.5px solid var(--line)'
+              : checked ? 'none'
+              : isRejected ? '2px solid var(--yellow)'
+              : '2.5px solid var(--line)',
+            background: skipped ? 'transparent'
+              : checked ? 'var(--ok)'
+              : isRejected ? 'var(--yellow-soft)'
+              : 'transparent',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'all 0.15s',
             pointerEvents: role === 'padre' ? 'none' : undefined,
             opacity: role === 'padre' ? 0.7 : undefined,
           }}
         >
-          {checked && !skipped && <span style={{ color: 'var(--on-accent)', fontSize: 16, lineHeight: 1 }}>✓</span>}
+          {!skipped && isDone && (
+            <span style={{ color: 'var(--on-accent)', fontSize: 16, lineHeight: 1 }}>✓</span>
+          )}
+          {!skipped && isApproved && (
+            <span style={{ color: 'var(--on-accent)', fontSize: 13, lineHeight: 1, letterSpacing: -4, marginLeft: -4 }}>✓✓</span>
+          )}
+          {!skipped && isRejected && (
+            <span style={{ color: 'var(--yellow)', fontSize: 14, lineHeight: 1 }}>⚠</span>
+          )}
         </div>
 
         <span style={{ fontSize: 20, lineHeight: 1 }}>{task.icon}</span>
@@ -66,6 +93,11 @@ export default function TaskItem({ task, completion, skipped, role, onToggle, on
           {task.time && (
             <div style={{ fontSize: 12, color: 'var(--ink-soft)', marginTop: 2 }}>
               {task.time}
+            </div>
+          )}
+          {!skipped && isRejected && (
+            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--yellow)', marginTop: 2 }}>
+              Rechazada · toca ⓘ para ver por qué
             </div>
           )}
         </div>
@@ -102,8 +134,8 @@ export default function TaskItem({ task, completion, skipped, role, onToggle, on
         </button>
       </div>
 
-      {/* "Me quedé en casa" toggle — solo tareas skippable y solo el hijo */}
-      {task.skippable && role === 'hijo' && (
+      {/* "Me quedé en casa" toggle — solo tareas skippable, solo el hijo y nunca en aprobadas */}
+      {task.skippable && role === 'hijo' && !isApproved && (
         <button
           onClick={onSkip}
           style={{
@@ -123,8 +155,9 @@ export default function TaskItem({ task, completion, skipped, role, onToggle, on
         </button>
       )}
 
-      {/* Padre: estado de "Me quedé en casa" en solo lectura (cierra la fila redondeada) */}
-      {task.skippable && role === 'padre' && skipped && (
+      {/* Solo lectura de "Me quedé en casa" (cierra la fila redondeada):
+          siempre para el padre; para el hijo solo si la tarea ya está aprobada. */}
+      {task.skippable && skipped && (role === 'padre' || isApproved) && (
         <div style={{
           padding: '7px 16px', borderRadius: '0 0 16px 16px',
           border: '1.5px solid var(--line)', borderTop: 'none',
@@ -133,7 +166,7 @@ export default function TaskItem({ task, completion, skipped, role, onToggle, on
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
           <span>✓</span>
-          Se quedó en casa (no cuenta para el %)
+          {role === 'padre' ? 'Se quedó en casa' : 'Te quedaste en casa'} (no cuenta para el %)
         </div>
       )}
     </div>

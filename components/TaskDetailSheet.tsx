@@ -26,15 +26,33 @@ function shortDate(iso: string) {
   return fmtDay.format(new Date(iso)).replace(/\.$/, '');
 }
 
+/** "10 oct a las 14:23" */
+function dateAndHour(iso: string) {
+  return `${shortDate(iso)} a las ${fmtHour.format(new Date(iso))}`;
+}
+
 const sectionLabel = {
   fontSize: 11, color: 'var(--ink-soft)', fontWeight: 700,
   textTransform: 'uppercase' as const, letterSpacing: 0.5, margin: '20px 0 8px',
 };
 
+const reviewBox = {
+  padding: '12px 14px', borderRadius: 14, fontSize: 13.5, lineHeight: 1.5,
+};
+
 export default function TaskDetailSheet({ task, day, role, completion, skipped, onClose, onToggle }: Props) {
   if (!task || !day) return null;
 
-  const done = completion !== null;
+  const status     = completion?.status ?? null;
+  const isDone     = status === 'done';
+  const isApproved = status === 'approved';
+  const isRejected = status === 'rejected';
+  // Hecha = done o approved (rejected no cuenta, igual que en TaskItem y el %).
+  const counts     = isDone || isApproved;
+
+  // El hijo puede actuar salvo en saltadas y aprobadas.
+  const canAct = role === 'hijo' && !skipped && !isApproved;
+  const actionLabel = isDone ? 'Desmarcar' : isRejected ? '✓ Marcar otra vez' : '✓ Marcar como completada';
 
   return (
     <BottomSheet
@@ -56,19 +74,70 @@ export default function TaskDetailSheet({ task, day, role, completion, skipped, 
         style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '14px 16px', borderRadius: 16,
-          background: skipped ? 'var(--teal-soft)' : done ? 'var(--ok-soft)' : 'var(--bg)',
-          color: skipped ? 'var(--teal)' : done ? 'var(--ok)' : 'var(--ink-soft)',
+          background: skipped ? 'var(--teal-soft)' : counts ? 'var(--ok-soft)' : 'var(--bg)',
+          color: skipped ? 'var(--teal)' : counts ? 'var(--ok)' : 'var(--ink-soft)',
           fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15.5, lineHeight: 1.35,
         }}
       >
         {skipped
           ? <>🏠 {role === 'padre' ? 'Se quedó en casa' : 'Me quedé en casa'} (no cuenta para el %)</>
-          : done
-            ? <>✓ Completada el {shortDate(completion.completed_at)} a las {fmtHour.format(new Date(completion.completed_at))}</>
-            : <>○ Pendiente</>}
+          : counts && completion
+            ? <>✓ Completada el {dateAndHour(completion.completed_at)}</>
+            : isRejected && completion
+              ? <>○ Marcada el {dateAndHour(completion.completed_at)}, falta rehacerla</>
+              : <>○ Pendiente</>}
       </div>
 
-      {/* Notas */}
+      {/* Revisión del padre (Fase 2) */}
+      {!skipped && completion && (
+        <>
+          <p style={sectionLabel}>Revisión</p>
+
+          {isDone && (
+            <div style={{ ...reviewBox, background: 'var(--bg)', color: 'var(--ink-soft)' }}>
+              ⏳ {role === 'padre' ? 'Esperando tu revisión (desde Admin → Revisar)' : 'Esperando revisión de papá/mamá'}
+            </div>
+          )}
+
+          {isApproved && (
+            <div style={{ ...reviewBox, background: 'var(--ok-soft)', color: 'var(--ok)' }}>
+              <div style={{ fontWeight: 700 }}>
+                ✓✓ Aprobada{role === 'hijo' ? ' por papá/mamá' : ''}
+                {completion.reviewed_at && <> el {dateAndHour(completion.reviewed_at)}</>}
+              </div>
+              {completion.comment && (
+                <p style={{ margin: '6px 0 0', color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+                  “{completion.comment}”
+                </p>
+              )}
+            </div>
+          )}
+
+          {isRejected && (
+            <div style={{
+              ...reviewBox, background: 'var(--yellow-soft)', color: 'var(--yellow)',
+              border: '1.5px solid var(--yellow)',
+            }}>
+              <div style={{ fontWeight: 700 }}>
+                ⚠ Rechazada
+                {completion.reviewed_at && <> el {dateAndHour(completion.reviewed_at)}</>}
+              </div>
+              {completion.comment && (
+                <p style={{ margin: '6px 0 0', color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+                  “{completion.comment}”
+                </p>
+              )}
+              {role === 'hijo' && (
+                <p style={{ margin: '8px 0 0', fontSize: 12.5, color: 'var(--ink-soft)' }}>
+                  Cuando la rehagas, vuelve a marcarla.
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Notas del hijo */}
       {completion?.notes && (
         <>
           <p style={sectionLabel}>Notas</p>
@@ -81,19 +150,19 @@ export default function TaskDetailSheet({ task, day, role, completion, skipped, 
         </>
       )}
 
-      {/* Acción — solo el hijo; el padre solo lee hasta Fase 2 */}
-      {role === 'hijo' && !skipped && (
+      {/* Acción — solo el hijo, nunca en saltadas ni aprobadas; el padre revisa desde Admin */}
+      {canAct && (
         <button
           onClick={onToggle}
           style={{
             width: '100%', minHeight: 56, marginTop: 24, borderRadius: 16, cursor: 'pointer',
-            border: done ? '1.5px solid var(--line)' : 'none',
-            background: done ? 'var(--bg-card)' : 'var(--ok)',
-            color: done ? 'var(--ink-soft)' : 'var(--on-accent)',
+            border: isDone ? '1.5px solid var(--line)' : 'none',
+            background: isDone ? 'var(--bg-card)' : 'var(--ok)',
+            color: isDone ? 'var(--ink-soft)' : 'var(--on-accent)',
             fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 16,
           }}
         >
-          {done ? 'Desmarcar' : '✓ Marcar como completada'}
+          {actionLabel}
         </button>
       )}
 

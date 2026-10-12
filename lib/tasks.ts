@@ -54,11 +54,16 @@ export function getDayCompletion(
   return Math.round((done / active.length) * 100);
 }
 
-/** Agrupa las completions de UNA semana por día: day → Set<task_id>. */
+/** Una completion cuenta como hecha si está 'done' o 'approved'. 'rejected' no cuenta. */
+export function countsAsDone(c: TaskCompletion): boolean {
+  return c.status === 'done' || c.status === 'approved';
+}
+
+/** Agrupa las completions hechas de UNA semana por día: day → Set<task_id>. */
 export function completedIdsByDay(completions: TaskCompletion[], weekKey: string): Map<string, Set<string>> {
   const map = new Map<string, Set<string>>();
   for (const c of completions) {
-    if (c.week_key !== weekKey) continue;
+    if (c.week_key !== weekKey || !countsAsDone(c)) continue;
     const set = map.get(c.day) ?? new Set<string>();
     set.add(c.task_id);
     map.set(c.day, set);

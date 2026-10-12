@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type { Profile, DbTask, AppState, DayState, UserPreferences, TaskCompletion } from '@/lib/types';
 import type { DayKey } from '@/lib/tasks';
@@ -217,54 +217,71 @@ export default function Home() {
     }, 800);
   }, [profile]);
 
+  // Cola del padre: completions de todos los hijos esperando revisión, más recientes primero.
+  const pendingReviews = useMemo(() => {
+    const all = Object.values(allChildrenCompletions).flat();
+    return all.filter(c => c.status === 'done').sort((a, b) =>
+      new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+    );
+  }, [allChildrenCompletions]);
+
   // Evita dos requests simultáneos sobre la misma tarea/día (doble tap).
   const togglesInFlight = useRef<Set<string>>(new Set());
 
-  async function handleToggleTask(taskId: string, weekKey: string, day: DayKey, currentlyDone: boolean) {
+  // El estado real de la completion se lee del state (no del caller), porque
+  // "rejected" se muestra sin marcar pero existe la fila: tocarla debe re-marcar, no borrar.
+  async function handleToggleTask(taskId: string, weekKey: string, day: DayKey) {
     if (!profile || profile.role !== 'hijo') return;
     const key = `${taskId}__${weekKey}__${day}`;
     if (togglesInFlight.current.has(key)) return;
-    togglesInFlight.current.add(key);
 
     const matches = (c: TaskCompletion) =>
       c.task_id === taskId && c.week_key === weekKey && c.day === day;
+    const existing = completions.find(matches) ?? null;
+    // Aprobada: no se toca (RLS lo bloquearía; mejor no enviar el request).
+    if (existing?.status === 'approved') return;
+
+    togglesInFlight.current.add(key);
     setSaveStatus('saving');
 
-    if (currentlyDone) {
-      // Optimistic: quitar; si falla, reponer la fila original.
-      const removed = completions.find(matches) ?? null;
+    if (existing?.status === 'done') {
+      // Desmarcar. Optimistic: quitar; si falla, reponer la fila original.
       setCompletions(prev => prev.filter(c => !matches(c)));
       const { error } = await supabase
         .from('task_completions').delete()
         .eq('task_id', taskId).eq('user_id', profile.id).eq('week_key', weekKey).eq('day', day);
       if (error) {
         console.error('[page] desmarcar tarea:', error.message);
-        if (removed) setCompletions(prev => [...prev.filter(c => !matches(c)), removed]);
+        setCompletions(prev => [...prev.filter(c => !matches(c)), existing]);
         setSaveStatus('error');
       } else {
         setSaveStatus('saved');
       }
     } else {
-      // Optimistic: fila temporal; se reemplaza por la real que devuelve el upsert.
+      // Marcar (nueva) o re-marcar tras rechazo (fresh start: se limpia el review,
+      // igual que hace el trigger de la 007). Optimistic: fila temporal → fila real.
       const now = new Date().toISOString();
       const temp: TaskCompletion = {
-        id: `temp-${key}`, task_id: taskId, family_id: profile.family_id, user_id: profile.id,
-        week_key: weekKey, day, status: 'done', evidence_url: null, notes: null,
-        completed_at: now, reviewed_at: null, reviewed_by: null, created_at: now, updated_at: now,
+        id: existing?.id ?? `temp-${key}`, task_id: taskId, family_id: profile.family_id, user_id: profile.id,
+        week_key: weekKey, day, status: 'done', evidence_url: null, notes: existing?.notes ?? null,
+        completed_at: now, reviewed_at: null, reviewed_by: null, comment: null,
+        created_at: existing?.created_at ?? now, updated_at: now,
       };
       setCompletions(prev => [...prev.filter(c => !matches(c)), temp]);
       const { data, error } = await supabase
         .from('task_completions')
         .upsert(
           { task_id: taskId, family_id: profile.family_id, user_id: profile.id,
-            week_key: weekKey, day, status: 'done', completed_at: now },
+            week_key: weekKey, day, status: 'done', completed_at: now,
+            comment: null, reviewed_at: null, reviewed_by: null },
           { onConflict: 'task_id,user_id,week_key,day' },
         )
         .select()
         .single();
       if (error) {
         console.error('[page] marcar tarea:', error.message);
-        setCompletions(prev => prev.filter(c => !matches(c)));
+        // Rollback: si era un rechazo, vuelve a quedar rechazada.
+        setCompletions(prev => [...prev.filter(c => !matches(c)), ...(existing ? [existing] : [])]);
         setSaveStatus('error');
       } else {
         setCompletions(prev => [...prev.filter(c => !matches(c)), data as TaskCompletion]);
@@ -272,6 +289,55 @@ export default function Home() {
       }
     }
     togglesInFlight.current.delete(key);
+  }
+
+  // ── Revisión del padre (Fase 2) ─────────────────────────────────────────────
+  // Aplica un cambio a una completion en los dos estados del padre:
+  // allChildrenCompletions (fuente) y completions (hijo seleccionado en Semana/Progreso).
+  function replaceCompletion(updated: TaskCompletion) {
+    const swap = (list: TaskCompletion[]) => list.map(c => c.id === updated.id ? updated : c);
+    setAllChildrenCompletions(prev => ({
+      ...prev,
+      [updated.user_id]: swap(prev[updated.user_id] ?? []),
+    }));
+    setCompletions(prev => swap(prev));
+  }
+
+  async function reviewCompletion(id: string, status: 'approved' | 'rejected', comment: string | null) {
+    if (!profile || profile.role !== 'padre') return;
+    const original = Object.values(allChildrenCompletions).flat().find(c => c.id === id);
+    if (!original || original.status !== 'done') return;
+
+    // Optimistic. reviewed_at/reviewed_by/updated_at reales los fija el trigger (007).
+    const now = new Date().toISOString();
+    replaceCompletion({ ...original, status, comment, reviewed_at: now, reviewed_by: profile.id, updated_at: now });
+    setSaveStatus('saving');
+
+    const { data, error } = await supabase
+      .from('task_completions')
+      .update({ status, comment })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) {
+      console.error(`[page] revisar completion (${status}):`, error.message);
+      replaceCompletion(original);
+      setSaveStatus('error');
+    } else {
+      replaceCompletion(data as TaskCompletion);
+      setSaveStatus('saved');
+    }
+  }
+
+  function handleApproveCompletion(id: string, comment?: string) {
+    return reviewCompletion(id, 'approved', comment?.trim() || null);
+  }
+
+  function handleRejectCompletion(id: string, comment: string) {
+    // El comentario es obligatorio; la UI (AdminTab) valida antes de llamar.
+    const trimmed = comment.trim();
+    if (!trimmed) return Promise.resolve();
+    return reviewCompletion(id, 'rejected', trimmed);
   }
 
   function handleOpenTaskDetail(task: DbTask, weekKey: string, day: DayKey) {
@@ -451,6 +517,9 @@ export default function Home() {
             childrenProfiles={childrenProfiles}
             selectedChildId={selectedChildId}
             onSelectChild={handleSelectChild}
+            pendingReviews={pendingReviews}
+            onApproveCompletion={handleApproveCompletion}
+            onRejectCompletion={handleRejectCompletion}
           />
         )}
       </div>
@@ -476,7 +545,7 @@ export default function Home() {
         onClose={handleCloseTaskDetail}
         onToggle={() => {
           if (taskDetailTask && taskDetailWeekKey && taskDetailDay) {
-            handleToggleTask(taskDetailTask.id, taskDetailWeekKey, taskDetailDay, detailCompletion !== null);
+            handleToggleTask(taskDetailTask.id, taskDetailWeekKey, taskDetailDay);
           }
         }}
       />

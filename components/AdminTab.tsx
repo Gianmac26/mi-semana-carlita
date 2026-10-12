@@ -1,7 +1,8 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { DbTask, InviteCode, MiMundoEntry, MiMundoHistory, Profile } from '@/lib/types';
+import type { DbTask, InviteCode, MiMundoEntry, MiMundoHistory, Profile, TaskCompletion } from '@/lib/types';
+import PendingReviews from '@/components/PendingReviews';
 
 interface Props {
   familyId: string;
@@ -10,9 +11,12 @@ interface Props {
   childrenProfiles: Profile[];
   selectedChildId: string | null;
   onSelectChild: (id: string) => void;
+  pendingReviews: TaskCompletion[];
+  onApproveCompletion: (id: string, comment?: string) => Promise<void>;
+  onRejectCompletion: (id: string, comment: string) => Promise<void>;
 }
 
-type Section = 'tasks' | 'invites' | 'mundo';
+type Section = 'tasks' | 'reviews' | 'invites' | 'mundo';
 
 const supabase = createBrowserClient();
 
@@ -64,7 +68,10 @@ const MundoPrompts = [
   { key: 'pedido',   title: '💌 Le pediría a mis papás...' },
 ];
 
-export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfiles, selectedChildId, onSelectChild }: Props) {
+export default function AdminTab({
+  familyId, tasks, onTasksChange, childrenProfiles, selectedChildId, onSelectChild,
+  pendingReviews, onApproveCompletion, onRejectCompletion,
+}: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, { displayName: string; history: MiMundoHistory }>>({});
@@ -174,7 +181,12 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
       </h3>
 
       <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-        {([['tasks', '📋 Tareas'], ['invites', '🔑 Invitaciones'], ['mundo', '💜 Mi mundo']] as [Section, string][]).map(([key, label]) => (
+        {([
+          ['tasks', '📋 Tareas'],
+          ['reviews', pendingReviews.length ? `✅ Revisar (${pendingReviews.length})` : '✅ Revisar'],
+          ['invites', '🔑 Invitaciones'],
+          ['mundo', '💜 Mi mundo'],
+        ] as [Section, string][]).map(([key, label]) => (
           <button key={key} onClick={() => setSection(key)}
             style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--accent)' : 'var(--line)'}`, background: section === key ? 'var(--accent)' : 'var(--bg-card)', color: section === key ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
             {label}
@@ -339,6 +351,16 @@ export default function AdminTab({ familyId, tasks, onTasksChange, childrenProfi
             {taskError && <p style={{ color: 'var(--error)', fontSize: 13, marginTop: 6 }}>{taskError}</p>}
           </div>
         </div>
+      )}
+
+      {section === 'reviews' && (
+        <PendingReviews
+          pendingReviews={pendingReviews}
+          tasks={tasks}
+          childrenProfiles={childrenProfiles}
+          onApproveCompletion={onApproveCompletion}
+          onRejectCompletion={onRejectCompletion}
+        />
       )}
 
       {section === 'invites' && (

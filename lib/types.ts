@@ -136,6 +136,8 @@ export interface TaskCompletion {
   completed_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  /** Feedback del padre al aprobar/rechazar (migración 007). */
+  comment: string | null;
   created_at: string;
   updated_at: string;
 }

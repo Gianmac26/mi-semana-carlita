@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react';
 import { AppState, DayState } from '@/lib/types';
 import type { DbTask, TaskCompletion } from '@/lib/types';
-import { DAY_KEYS, DayKey, getDayCompletion, getSkippedSlugs, getTasksForDayFromList } from '@/lib/tasks';
+import { DAY_KEYS, DayKey, countsAsDone, getDayCompletion, getSkippedSlugs, getTasksForDayFromList } from '@/lib/tasks';
 import { getMondayOfWeek, formatWeekKey, getTodayDayKey } from '@/lib/utils';
 import WeekSelector from './WeekSelector';
 import DayChips from './DayChips';
@@ -15,7 +15,7 @@ interface Props {
   completions: TaskCompletion[];
   role: 'padre' | 'hijo';
   onChange: (weekKey: string, day: string, dayState: DayState) => void;
-  onToggleTask: (taskId: string, weekKey: string, day: DayKey, currentlyDone: boolean) => void;
+  onToggleTask: (taskId: string, weekKey: string, day: DayKey) => void;
   onOpenDetail: (task: DbTask, weekKey: string, day: DayKey) => void;
   childDisplayName?: string;
   rulesSlot?: React.ReactNode;
@@ -57,7 +57,10 @@ export default function WeekTab({
 
   const skippedMap = (dayState.skipped ?? {}) as Record<string, boolean>;
   const pct = getDayCompletion(
-    new Set(dayTasks.filter(t => completionsMap.has(`${t.id}__${selectedDay}`)).map(t => t.id)),
+    new Set(dayTasks.filter(t => {
+      const c = completionsMap.get(`${t.id}__${selectedDay}`);
+      return c !== undefined && countsAsDone(c);
+    }).map(t => t.id)),
     getSkippedSlugs(dayState as Record<string, unknown>),
     dayTasks,
   );
@@ -124,7 +127,7 @@ export default function WeekTab({
                   completion={completion}
                   skipped={skipped}
                   role={role}
-                  onToggle={() => onToggleTask(task.id, weekKey, selectedDay, completion !== null)}
+                  onToggle={() => onToggleTask(task.id, weekKey, selectedDay)}
                   onSkip={() => toggleSkip(task.slug)}
                   onOpenDetail={() => onOpenDetail(task, weekKey, selectedDay)}
                 />
