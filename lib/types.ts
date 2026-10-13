@@ -178,3 +178,24 @@ export interface BadgeEntry {
   earned_at: string;
   notified_at: string | null;
 }
+
+// ── Contrato familiar (Fase 4 — migración 009) ───────────────────────────────
+
+export interface FamilyContract {
+  id: string;
+  family_id: string;
+  version: number;
+  intro_text: string;
+  rules_snapshot: { emoji: string; text: string }[];
+  active: boolean;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface ContractSignature {
+  id: string;
+  contract_id: string;
+  family_id: string;
+  user_id: string;
+  signed_at: string;
+}

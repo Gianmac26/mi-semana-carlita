@@ -98,3 +98,9 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 - [ ] Retroactividad: cuando se aplicó la 008, las 7 aprobaciones previas de Sofía no otorgaron puntos ni insignias retroactivamente. Solo se aplica hacia adelante. Si en el futuro queremos dar insignias retroactivas, hay que reprocesar el histórico.
 - [ ] Racha "viva": se muestra si last_active_date O updated_at del registro son hoy/ayer (Lima). Si el padre aprueba un backlog viejo, el hijo verá la racha viva un par de días aunque la cadena esté rota en rigor. Decisión de producto documentada: priorizamos que la recompensa no desaparezca por latencia de revisión.
 - [ ] El padre no ve las insignias de sus hijos en la pestaña Logros. Hoy la galería se muestra solo al hijo. Mejora futura: cargar insignias del hijo seleccionado para el padre (requiere query filtrada por selectedChildId + estado nuevo).
+
+## Contrato familiar — deuda Fase 4
+- [ ] Los hijos que firmaron una versión anterior no reciben aviso de versión nueva pendiente. Mejora futura: badge/toast.
+- [ ] Las firmas no se pueden deshacer (inmutabilidad por diseño, aplicado en DB).
+- [ ] Los hijos que aún no firman no ven recordatorio. Podría ir en Progreso o en header.
+- [ ] Al activar contract_signed en lib/badges.ts (Parte 2), revisar que la insignia aparezca en la galería.
