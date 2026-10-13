@@ -199,3 +199,40 @@ export interface ContractSignature {
   user_id: string;
   signed_at: string;
 }
+
+// ── Tracking emocional (Módulo 2, Fase 4 — migración 010) ────────────────────
+
+export type EmotionLabel =
+  | 'alegria' | 'tristeza' | 'enojo' | 'miedo'
+  | 'calma' | 'ansiedad' | 'orgullo' | 'cansancio';
+
+export interface EmotionLog {
+  id: string;
+  user_id: string;
+  family_id: string;
+  log_date: string;
+  mood: number;
+  emotion: EmotionLabel;
+  note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type EmotionTrendLabel =
+  | 'sin-registros'
+  | 'pocos-registros'
+  | 'tranquila'
+  | 'mixta'
+  | 'dificil'
+  | 'muy-dificil';
+
+export interface EmotionTrendWeek {
+  week_start: string;
+  week_end: string;
+  label: EmotionTrendLabel;
+}
+
+export interface EmotionTrend {
+  user_id: string;
+  weeks: EmotionTrendWeek[];
+}

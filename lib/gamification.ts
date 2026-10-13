@@ -20,7 +20,7 @@ export function limaDateOf(iso: string): string {
 }
 
 /** Días entre dos fechas 'YYYY-MM-DD' (b - a). Mediodía para esquivar saltos de horario. */
-function diffDays(a: string, b: string): number {
+export function diffDays(a: string, b: string): number {
   const ta = new Date(a + 'T12:00:00').getTime();
   const tb = new Date(b + 'T12:00:00').getTime();
   return Math.round((tb - ta) / (1000 * 60 * 60 * 24));

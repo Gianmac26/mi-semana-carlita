@@ -107,3 +107,10 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 
 ## Contraste — deuda global
 - [ ] --ok (#4CAF50) con texto blanco da ~2.8:1 (no pasa AA). Afecta: TaskDetailSheet (botón Aprobada), ContractSheet (botón Firmar), ContractEditor (botón Firmar). Solución futura: oscurecer --ok a nivel de paleta o usar --on-accent oscuro sobre --ok-soft. Revisar junto con el resto de componentes verdes.
+
+## Tracking emocional — reglas de diseño
+- Regla: las insignias emocionales solo premian el HÁBITO de registrar, nunca el contenido (ej.: prohibido "semana feliz", "5 días de alegría"). Motivo: el padre ve las insignias vía RLS.
+- Decisión aceptada: el padre ve `first_emotion_log` (indica hábito, no estado emocional).
+- Privacidad de la nota: "tu familia no puede verla" en la UI (no "nadie", porque los admins técnicamente sí).
+- Riesgo residual aceptado: la etiqueta de la semana actual se recalcula a diario; un padre podría inferir días puntuales por cambios de etiqueta. Mitigado por etiquetas gruesas + mínimo 3 registros.
+- [ ] Parte 2: `EmotionMeta.key` puede ser `null` (EMOTION_FALLBACK). No usarlo como React key sin fallback.
