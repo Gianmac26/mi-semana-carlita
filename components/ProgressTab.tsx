@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { AppState } from '@/lib/types';
-import type { DbTask, TaskCompletion, BadgeEntry } from '@/lib/types';
+import type { DbTask, TaskCompletion, BadgeEntry, FamilyContract, ContractSignature } from '@/lib/types';
 import BadgeGallery from '@/components/BadgeGallery';
+import ContractCard from '@/components/ContractCard';
 import {
   DayKey, EMPTY_SET,
   completedIdsByDay, getDayCompletion, getSkippedSlugs, getTasksForDayFromList,
@@ -16,6 +17,11 @@ interface Props {
   completions: TaskCompletion[];
   /** Insignias ganadas (tabla badges, migración 008). Solo el hijo: sin prop no hay galería. */
   earnedBadges?: BadgeEntry[];
+  /** Contrato familiar activo (migración 009) y sus firmas. */
+  contract: FamilyContract | null;
+  contractSignatures: ContractSignature[];
+  onOpenContract: () => void;
+  currentUserId: string;
 }
 
 const CHART_DAYS: DayKey[]  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -51,7 +57,10 @@ function weekAvg(
   return Math.round(sum / withTasks.length);
 }
 
-export default function ProgressTab({ state, tasks, completions, earnedBadges }: Props) {
+export default function ProgressTab({
+  state, tasks, completions, earnedBadges,
+  contract, contractSignatures, onOpenContract, currentUserId,
+}: Props) {
   const today = new Date();
   const [monday] = useState(() => getMondayOfWeek(today));
   const weekKey  = formatWeekKey(monday);
@@ -216,7 +225,17 @@ export default function ProgressTab({ state, tasks, completions, earnedBadges }:
         </p>
       )}
 
-      {earnedBadges && <BadgeGallery earnedBadges={earnedBadges} />}
+      {earnedBadges && (
+        <>
+          <ContractCard
+            contract={contract}
+            signatures={contractSignatures}
+            userId={currentUserId}
+            onOpen={onOpenContract}
+          />
+          <BadgeGallery earnedBadges={earnedBadges} />
+        </>
+      )}
     </div>
   );
 }

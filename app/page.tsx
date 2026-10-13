@@ -3,9 +3,10 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type {
   Profile, DbTask, AppState, DayState, UserPreferences, TaskCompletion,
-  PointsLedgerEntry, Streak, BadgeEntry,
+  PointsLedgerEntry, Streak, BadgeEntry, FamilyContract, ContractSignature,
 } from '@/lib/types';
 import type { DayKey } from '@/lib/tasks';
+import type { CreateContractResult } from '@/lib/contract';
 import type { PaletteId, ThemeMode } from '@/lib/themes';
 import { ROLE_DEFAULT_PALETTE, DEFAULT_PALETTE } from '@/lib/themes';
 import StatusIndicator from '@/components/StatusIndicator';
@@ -26,6 +27,7 @@ import { getTotalPoints, getCurrentStreak } from '@/lib/gamification';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
 import TaskDetailSheet from '@/components/TaskDetailSheet';
+import ContractSheet from '@/components/ContractSheet';
 
 type PageState = 'loading' | 'no-profile-first' | 'no-profile-code' | 'ready';
 type Tab = 'week' | 'progress' | 'events' | 'wellness' | 'mundo' | 'admin' | 'tema';
@@ -65,6 +67,13 @@ export default function Home() {
   const [pointsLedger, setPointsLedger] = useState<PointsLedgerEntry[]>([]);
   const [streak,       setStreak]       = useState<Streak | null>(null);
   const [badges,       setBadges]       = useState<BadgeEntry[]>([]);
+  // Contrato familiar (Fase 4): contrato activo + sus firmas + miembros (ambos roles)
+  const [contract,           setContract]           = useState<FamilyContract | null>(null);
+  const [contractSignatures, setContractSignatures] = useState<ContractSignature[]>([]);
+  const [familyMembers,      setFamilyMembers]      = useState<Profile[]>([]);
+  const [contractSheetOpen,  setContractSheetOpen]  = useState(false);
+  const [signingContract,    setSigningContract]    = useState(false);
+  const [signContractError,  setSignContractError]  = useState<string | null>(null);
   // TaskDetailSheet: tarea + semana + día abiertos (la semana es la visible en WeekTab, no siempre la actual)
   const [taskDetailTask,    setTaskDetailTask]    = useState<DbTask | null>(null);
   const [taskDetailWeekKey, setTaskDetailWeekKey] = useState<string | null>(null);
@@ -93,6 +102,29 @@ export default function Home() {
     ]);
     setTasks((taskRows as DbTask[]) ?? []);
     setFamilyRules((ruleRows as FamilyRule[]) ?? []);
+
+    // Contrato familiar (009): mismo flujo para padre e hijo.
+    // Contrato activo + miembros (para el sheet de firmas) en paralelo.
+    const [{ data: contractRow, error: contractErr }, { data: membersRows, error: membersErr }] = await Promise.all([
+      supabase.from('family_contracts').select('*').eq('family_id', p.family_id).eq('active', true).maybeSingle(),
+      supabase.from('profiles').select('*').eq('family_id', p.family_id),
+    ]);
+    if (contractErr) console.error('[page] family_contracts:', contractErr.message);
+    if (membersErr)  console.error('[page] family_members:', membersErr.message);
+    setContract((contractRow as FamilyContract | null) ?? null);
+    setFamilyMembers((membersRows as Profile[]) ?? []);
+
+    // Firmas SOLO del contrato activo (si existe).
+    if (contractRow) {
+      const { data: signatureRows, error: signErr } = await supabase
+        .from('contract_signatures')
+        .select('*')
+        .eq('contract_id', (contractRow as FamilyContract).id);
+      if (signErr) console.error('[page] contract_signatures:', signErr.message);
+      setContractSignatures((signatureRows as ContractSignature[]) ?? []);
+    } else {
+      setContractSignatures([]);
+    }
 
     // Apply palette + mode from Supabase (falls back to role default for new users)
     const prefs = prefsRow as UserPreferences | null;
@@ -380,6 +412,64 @@ export default function Home() {
     if (error) console.error('[page] mark badges notified:', error.message);
   }
 
+  // ── Contrato familiar (Fase 4) ──────────────────────────────────────────────
+
+  async function handleSignContract(contractId: string) {
+    if (!profile || signingContract) return;
+    setSigningContract(true);
+    setSignContractError(null);
+    const now = new Date().toISOString();
+    const temp: ContractSignature = {
+      id: `temp-${Date.now()}`,
+      contract_id: contractId,
+      family_id: profile.family_id,
+      user_id: profile.id,
+      signed_at: now,
+    };
+    setContractSignatures(prev => [...prev, temp]);
+
+    const { data, error } = await supabase
+      .from('contract_signatures')
+      .insert({ contract_id: contractId, family_id: profile.family_id, user_id: profile.id })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[page] firmar contrato:', error.message);
+      setContractSignatures(prev => prev.filter(s => s.id !== temp.id));
+      setSignContractError('No se pudo firmar. Revisa tu conexión e intenta de nuevo.');
+      setSigningContract(false);
+      return;
+    }
+
+    setContractSignatures(prev => prev.map(s => s.id === temp.id ? (data as ContractSignature) : s));
+
+    // Recargar badges: el trigger otorgó contract_signed (si el firmante es hijo).
+    const { data: badgeRows } = await supabase
+      .from('badges').select('*').eq('user_id', profile.id);
+    setBadges((badgeRows as BadgeEntry[]) ?? []);
+
+    setSigningContract(false);
+  }
+
+  async function handleCreateContract(intro: string): Promise<boolean> {
+    const { data, error } = await supabase.rpc('create_family_contract', { p_intro: intro });
+    if (error) {
+      console.error('[page] crear contrato:', error.message);
+      return false;
+    }
+    const newContract = data as CreateContractResult;
+    setContract(newContract);
+
+    // Recargar firmas del nuevo contrato (el RPC firmó al padre automáticamente).
+    const { data: signatureRows } = await supabase
+      .from('contract_signatures')
+      .select('*')
+      .eq('contract_id', newContract.id);
+    setContractSignatures((signatureRows as ContractSignature[]) ?? []);
+    return true;
+  }
+
   function handleOpenTaskDetail(task: DbTask, weekKey: string, day: DayKey) {
     setTaskDetailTask(task);
     setTaskDetailWeekKey(weekKey);
@@ -545,6 +635,10 @@ export default function Home() {
             tasks={tasks}
             completions={completions}
             earnedBadges={profile?.role === 'hijo' ? badges : undefined}
+            contract={contract}
+            contractSignatures={contractSignatures}
+            onOpenContract={() => setContractSheetOpen(true)}
+            currentUserId={profile?.id ?? ''}
           />
         )}
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
@@ -572,6 +666,14 @@ export default function Home() {
             pendingReviews={pendingReviews}
             onApproveCompletion={handleApproveCompletion}
             onRejectCompletion={handleRejectCompletion}
+            contract={contract}
+            contractSignatures={contractSignatures}
+            profile={profile}
+            familyMembers={familyMembers}
+            onCreateContract={handleCreateContract}
+            onSignContract={handleSignContract}
+            signingContract={signingContract}
+            signContractError={signContractError}
           />
         )}
       </div>
@@ -601,6 +703,21 @@ export default function Home() {
           }
         }}
       />
+
+      {/* No se cierra al firmar: el usuario debe ver "✓ Ya firmaste este contrato". */}
+      {contract && profile && (
+        <ContractSheet
+          open={contractSheetOpen}
+          onClose={() => setContractSheetOpen(false)}
+          contract={contract}
+          signatures={contractSignatures}
+          profile={profile}
+          familyMembers={familyMembers}
+          signing={signingContract}
+          error={signContractError}
+          onSign={(id) => { handleSignContract(id); }}
+        />
+      )}
 
       {profile?.role === 'hijo' && (
         <BadgeToast badges={badges} onMarkNotified={handleMarkBadgesNotified} />

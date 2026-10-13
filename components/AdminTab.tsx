@@ -1,8 +1,12 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { DbTask, InviteCode, MiMundoEntry, MiMundoHistory, Profile, TaskCompletion } from '@/lib/types';
+import type {
+  DbTask, InviteCode, MiMundoEntry, MiMundoHistory, Profile, TaskCompletion,
+  FamilyContract, ContractSignature,
+} from '@/lib/types';
 import PendingReviews from '@/components/PendingReviews';
+import ContractEditor from '@/components/ContractEditor';
 
 interface Props {
   familyId: string;
@@ -14,9 +18,18 @@ interface Props {
   pendingReviews: TaskCompletion[];
   onApproveCompletion: (id: string, comment?: string) => Promise<void>;
   onRejectCompletion: (id: string, comment: string) => Promise<void>;
+  // Contrato familiar (Fase 4)
+  contract: FamilyContract | null;
+  contractSignatures: ContractSignature[];
+  profile: Profile;
+  familyMembers: Profile[];
+  onCreateContract: (intro: string) => Promise<boolean>;
+  onSignContract: (contractId: string) => void;
+  signingContract: boolean;
+  signContractError: string | null;
 }
 
-type Section = 'tasks' | 'reviews' | 'invites' | 'mundo';
+type Section = 'tasks' | 'reviews' | 'contract' | 'invites' | 'mundo';
 
 const supabase = createBrowserClient();
 
@@ -71,6 +84,8 @@ const MundoPrompts = [
 export default function AdminTab({
   familyId, tasks, onTasksChange, childrenProfiles, selectedChildId, onSelectChild,
   pendingReviews, onApproveCompletion, onRejectCompletion,
+  contract, contractSignatures, profile, familyMembers,
+  onCreateContract, onSignContract, signingContract, signContractError,
 }: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
@@ -180,15 +195,20 @@ export default function AdminTab({
         ⚙️ Admin
       </h3>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
+      <div style={{
+        display: 'flex', gap: 6, marginBottom: 20,
+        overflowX: 'auto', paddingBottom: 4,
+        scrollbarWidth: 'none',
+      }}>
         {([
           ['tasks', '📋 Tareas'],
           ['reviews', pendingReviews.length ? `✅ Revisar (${pendingReviews.length})` : '✅ Revisar'],
+          ['contract', '🤝 Contrato'],
           ['invites', '🔑 Invitaciones'],
           ['mundo', '💜 Mi mundo'],
         ] as [Section, string][]).map(([key, label]) => (
           <button key={key} onClick={() => setSection(key)}
-            style={{ flex: 1, padding: '9px 0', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--accent)' : 'var(--line)'}`, background: section === key ? 'var(--accent)' : 'var(--bg-card)', color: section === key ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
+            style={{ flexShrink: 0, minWidth: 90, padding: '9px 14px', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--accent)' : 'var(--line)'}`, background: section === key ? 'var(--accent)' : 'var(--bg-card)', color: section === key ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
             {label}
           </button>
         ))}
@@ -360,6 +380,19 @@ export default function AdminTab({
           childrenProfiles={childrenProfiles}
           onApproveCompletion={onApproveCompletion}
           onRejectCompletion={onRejectCompletion}
+        />
+      )}
+
+      {section === 'contract' && (
+        <ContractEditor
+          contract={contract}
+          signatures={contractSignatures}
+          profile={profile}
+          familyMembers={familyMembers}
+          onCreate={onCreateContract}
+          onSign={onSignContract}
+          signing={signingContract}
+          error={signContractError}
         />
       )}
 

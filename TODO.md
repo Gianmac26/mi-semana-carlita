@@ -103,4 +103,7 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 - [ ] Los hijos que firmaron una versión anterior no reciben aviso de versión nueva pendiente. Mejora futura: badge/toast.
 - [ ] Las firmas no se pueden deshacer (inmutabilidad por diseño, aplicado en DB).
 - [ ] Los hijos que aún no firman no ven recordatorio. Podría ir en Progreso o en header.
-- [ ] Al activar contract_signed en lib/badges.ts (Parte 2), revisar que la insignia aparezca en la galería.
+- [x] Al activar contract_signed en lib/badges.ts (Parte 2), revisar que la insignia aparezca en la galería.
+
+## Contraste — deuda global
+- [ ] --ok (#4CAF50) con texto blanco da ~2.8:1 (no pasa AA). Afecta: TaskDetailSheet (botón Aprobada), ContractSheet (botón Firmar), ContractEditor (botón Firmar). Solución futura: oscurecer --ok a nivel de paleta o usar --on-accent oscuro sobre --ok-soft. Revisar junto con el resto de componentes verdes.
