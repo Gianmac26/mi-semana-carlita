@@ -1,7 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { AppState } from '@/lib/types';
-import type { DbTask, TaskCompletion } from '@/lib/types';
+import type { DbTask, TaskCompletion, BadgeEntry } from '@/lib/types';
+import BadgeGallery from '@/components/BadgeGallery';
 import {
   DayKey, EMPTY_SET,
   completedIdsByDay, getDayCompletion, getSkippedSlugs, getTasksForDayFromList,
@@ -13,6 +14,8 @@ interface Props {
   tasks: DbTask[];
   /** Completions del hijo activo (todas las semanas cargadas). */
   completions: TaskCompletion[];
+  /** Insignias ganadas (tabla badges, migración 008). Solo el hijo: sin prop no hay galería. */
+  earnedBadges?: BadgeEntry[];
 }
 
 const CHART_DAYS: DayKey[]  = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -48,7 +51,7 @@ function weekAvg(
   return Math.round(sum / withTasks.length);
 }
 
-export default function ProgressTab({ state, tasks, completions }: Props) {
+export default function ProgressTab({ state, tasks, completions, earnedBadges }: Props) {
   const today = new Date();
   const [monday] = useState(() => getMondayOfWeek(today));
   const weekKey  = formatWeekKey(monday);
@@ -212,6 +215,8 @@ export default function ProgressTab({ state, tasks, completions }: Props) {
           Aún no hay datos registrados. ¡Empieza marcando tus tareas! ✨
         </p>
       )}
+
+      {earnedBadges && <BadgeGallery earnedBadges={earnedBadges} />}
     </div>
   );
 }

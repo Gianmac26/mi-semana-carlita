@@ -141,3 +141,40 @@ export interface TaskCompletion {
   created_at: string;
   updated_at: string;
 }
+
+// ── Gamificación (Fase 3 — migración 008) ────────────────────────────────────
+
+export type PointReason =
+  | 'task_approved'
+  | 'streak_bonus'
+  | 'badge_earned'
+  | 'contract_signed'
+  | 'emotion_logged';
+
+export interface PointsLedgerEntry {
+  id: string;
+  user_id: string;
+  family_id: string;
+  amount: number;
+  reason: PointReason;
+  ref_id: string | null;
+  created_at: string;
+}
+
+export interface Streak {
+  user_id: string;
+  family_id: string;
+  current: number;
+  best: number;
+  last_active_date: string | null;
+  updated_at: string;
+}
+
+export interface BadgeEntry {
+  id: string;
+  user_id: string;
+  family_id: string;
+  badge_slug: string;
+  earned_at: string;
+  notified_at: string | null;
+}

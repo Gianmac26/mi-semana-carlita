@@ -91,8 +91,10 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 - [x] Streaks: el INSERT lazy + SELECT ... FOR UPDATE serializa aprobaciones simultáneas del mismo hijo. Documentado como defensa. Sin bug activo.
 - [ ] Aprobaciones fuera de orden cronológico no extienden la racha hacia atrás. Mejora futura: trackear días contabilizados o forzar revisión en orden cronológico.
 - [ ] week_complete "≥5 aprobaciones" es arbitrario. Revisar cuando haya familias con menos de 5 tareas por semana (alternativa: 80% de las asignadas).
-- [ ] Smoke test del trigger con UPDATE manual: pendiente al inicio de Parte 2.
-- [ ] PointsBadge (Parte 2): calcular "hoy" en zona America/Lima (Intl.DateTimeFormat con timeZone: 'America/Lima'), no con el TZ del navegador. Sin esto, un hijo en otra zona vería su racha rota a las 9pm.
+- [x] Smoke test del trigger con UPDATE manual: pasó el 13 oct 2026 (10+5 pts, racha=1, first_task).
+- [x] PointsBadge: 'hoy' se calcula en America/Lima con Intl.DateTimeFormat. Resuelto en Fase 3 Parte 2.
 
 ## Gamificación — deuda Fase 3 (cont.)
 - [ ] Retroactividad: cuando se aplicó la 008, las 7 aprobaciones previas de Sofía no otorgaron puntos ni insignias retroactivamente. Solo se aplica hacia adelante. Si en el futuro queremos dar insignias retroactivas, hay que reprocesar el histórico.
+- [ ] Racha "viva": se muestra si last_active_date O updated_at del registro son hoy/ayer (Lima). Si el padre aprueba un backlog viejo, el hijo verá la racha viva un par de días aunque la cadena esté rota en rigor. Decisión de producto documentada: priorizamos que la recompensa no desaparezca por latencia de revisión.
+- [ ] El padre no ve las insignias de sus hijos en la pestaña Logros. Hoy la galería se muestra solo al hijo. Mejora futura: cargar insignias del hijo seleccionado para el padre (requiere query filtrada por selectedChildId + estado nuevo).

@@ -1,7 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
-import type { Profile, DbTask, AppState, DayState, UserPreferences, TaskCompletion } from '@/lib/types';
+import type {
+  Profile, DbTask, AppState, DayState, UserPreferences, TaskCompletion,
+  PointsLedgerEntry, Streak, BadgeEntry,
+} from '@/lib/types';
 import type { DayKey } from '@/lib/tasks';
 import type { PaletteId, ThemeMode } from '@/lib/themes';
 import { ROLE_DEFAULT_PALETTE, DEFAULT_PALETTE } from '@/lib/themes';
@@ -17,6 +20,9 @@ import GoldenRulesEditor, { type FamilyRule } from '@/components/GoldenRulesEdit
 import ThemeToggle from '@/components/ThemeToggle';
 import ThemePicker from '@/components/ThemePicker';
 import AvatarPicker from '@/components/AvatarPicker';
+import PointsBadge from '@/components/PointsBadge';
+import BadgeToast from '@/components/BadgeToast';
+import { getTotalPoints, getCurrentStreak } from '@/lib/gamification';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
 import TaskDetailSheet from '@/components/TaskDetailSheet';
@@ -55,6 +61,10 @@ export default function Home() {
   // task_completions: las del hijo activo + (padre) todas las de la familia agrupadas por user_id
   const [completions,            setCompletions]            = useState<TaskCompletion[]>([]);
   const [allChildrenCompletions, setAllChildrenCompletions] = useState<Record<string, TaskCompletion[]>>({});
+  // Gamificación (solo hijo): puntos, racha e insignias propias
+  const [pointsLedger, setPointsLedger] = useState<PointsLedgerEntry[]>([]);
+  const [streak,       setStreak]       = useState<Streak | null>(null);
+  const [badges,       setBadges]       = useState<BadgeEntry[]>([]);
   // TaskDetailSheet: tarea + semana + día abiertos (la semana es la visible en WeekTab, no siempre la actual)
   const [taskDetailTask,    setTaskDetailTask]    = useState<DbTask | null>(null);
   const [taskDetailWeekKey, setTaskDetailWeekKey] = useState<string | null>(null);
@@ -132,11 +142,24 @@ export default function Home() {
       setCompletions(firstChildId ? (byChild[firstChildId] ?? []) : []);
     } else {
       // Todas las semanas (igual que weekly_state): WeekTab navega semanas y ProgressTab mira 7.
-      const [{ data: weekRows }, { data: completionRows, error: completionErr }] = await Promise.all([
+      // Gamificación (008): si alguna query falla se loguea y se sigue con vacío.
+      const [
+        { data: weekRows }, { data: completionRows, error: completionErr },
+        { data: ledgerRows, error: ledgerErr },
+        { data: streakRow,  error: streakErr },
+        { data: badgeRows,  error: badgeErr },
+      ] = await Promise.all([
         supabase.from('weekly_state').select('*').eq('family_id', p.family_id).eq('user_id', p.id),
         supabase.from('task_completions').select('*').eq('family_id', p.family_id).eq('user_id', p.id),
+        supabase.from('points_ledger').select('*').eq('user_id', p.id),
+        supabase.from('streaks').select('*').eq('user_id', p.id).maybeSingle(),
+        supabase.from('badges').select('*').eq('user_id', p.id),
       ]);
       if (completionErr) console.error('[page] task_completions:', completionErr.message);
+      if (ledgerErr)     console.error('[page] points_ledger:', ledgerErr.message);
+      if (streakErr)     console.error('[page] streaks:', streakErr.message);
+      if (badgeErr)      console.error('[page] badges:', badgeErr.message);
+
       setCompletions((completionRows as TaskCompletion[]) ?? []);
       const assembled: AppState['weeks'] = {};
       for (const row of (weekRows ?? [])) {
@@ -144,6 +167,9 @@ export default function Home() {
         assembled[row.week_key][row.day] = row.state;
       }
       setWeeks(assembled);
+      setPointsLedger((ledgerRows as PointsLedgerEntry[]) ?? []);
+      setStreak((streakRow as Streak | null) ?? null);
+      setBadges((badgeRows as BadgeEntry[]) ?? []);
     }
     setPageState('ready');
   }
@@ -340,6 +366,20 @@ export default function Home() {
     return reviewCompletion(id, 'rejected', trimmed);
   }
 
+  async function handleMarkBadgesNotified(ids: string[]) {
+    // Optimistic: el toast se cierra al instante. Si el UPDATE falla, la insignia sigue
+    // con notified_at null en DB y el toast vuelve a salir en la próxima carga.
+    const now = new Date().toISOString();
+    setBadges(prev => prev.map(b =>
+      ids.includes(b.id) ? { ...b, notified_at: now } : b
+    ));
+    const { error } = await supabase
+      .from('badges')
+      .update({ notified_at: now })
+      .in('id', ids);
+    if (error) console.error('[page] mark badges notified:', error.message);
+  }
+
   function handleOpenTaskDetail(task: DbTask, weekKey: string, day: DayKey) {
     setTaskDetailTask(task);
     setTaskDetailWeekKey(weekKey);
@@ -458,7 +498,12 @@ export default function Home() {
           </button>
           <div style={{ flex: 1 }}>
             <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 30, color: 'var(--accent)', letterSpacing: 1 }}>MI SEMANA</h1>
-            <p style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-soft)', fontSize: 14, marginTop: 2 }}>{profile?.display_name}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 2 }}>
+              <p style={{ fontFamily: 'var(--font-body)', color: 'var(--ink-soft)', fontSize: 14 }}>{profile?.display_name}</p>
+              {profile?.role === 'hijo' && (
+                <PointsBadge points={getTotalPoints(pointsLedger)} streak={getCurrentStreak(streak)} />
+              )}
+            </div>
           </div>
           <ThemeToggle userId={profile?.id} />
           <button onClick={handleSignOut} className="btn-salir"
@@ -494,7 +539,14 @@ export default function Home() {
               : <GoldenRules rules={familyRules} />
           }
         />}
-        {tab === 'progress' && <ProgressTab state={{ weeks, events: [] }} tasks={tasks} completions={completions} />}
+        {tab === 'progress' && (
+          <ProgressTab
+            state={{ weeks, events: [] }}
+            tasks={tasks}
+            completions={completions}
+            earnedBadges={profile?.role === 'hijo' ? badges : undefined}
+          />
+        )}
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'wellness' && <WellnessTab />}
         {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
@@ -549,6 +601,10 @@ export default function Home() {
           }
         }}
       />
+
+      {profile?.role === 'hijo' && (
+        <BadgeToast badges={badges} onMarkNotified={handleMarkBadgesNotified} />
+      )}
     </>
   );
 }

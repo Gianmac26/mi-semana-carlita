@@ -21,8 +21,8 @@ export interface BadgeDef {
 export const BADGES: BadgeDef[] = [
   { slug: 'first_task',        emoji: '🌱', title: 'Primer paso',         description: 'Tu primera tarea aprobada',                      active: true },
   { slug: 'week_complete',     emoji: '📅', title: 'Semana completa',     description: '5 tareas aprobadas en una semana',               active: true },
-  { slug: '7_day_streak',      emoji: '🔥', title: 'Una semana fuerte',   description: '7 días consecutivos con al menos 1 aprobación',  active: true },
-  { slug: '30_day_streak',     emoji: '🏆', title: 'Constancia total',    description: '30 días consecutivos con al menos 1 aprobación', active: true },
+  { slug: '7_day_streak',      emoji: '🔥', title: 'Una semana fuerte',   description: '7 días seguidos con al menos una tarea hecha',   active: true },
+  { slug: '30_day_streak',     emoji: '🏆', title: 'Constancia total',    description: '30 días seguidos con al menos una tarea hecha',  active: true },
   { slug: 'contract_signed',   emoji: '🤝', title: 'Compromiso familiar', description: 'Firmaste el contrato familiar',                  active: false },
   { slug: 'first_emotion_log', emoji: '💭', title: 'Primer registro',     description: 'Registraste tu primera emoción',                 active: false },
   { slug: 'helpline_aware',    emoji: '💙', title: 'Sé pedir ayuda',      description: 'Conoces las líneas de ayuda disponibles',        active: false },
