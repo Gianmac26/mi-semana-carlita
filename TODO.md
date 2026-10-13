@@ -86,3 +86,13 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 
 ## Fase 2 — mejoras opcionales (post-demo)
 - [ ] Badge rojo en la nav del Admin (BottomNav) cuando hay completions pendientes. Hoy el contador está en el botón "✅ Revisar (N)" dentro de AdminTab, que es suficiente para el demo.
+
+## Gamificación — deuda Fase 3
+- [x] Streaks: el INSERT lazy + SELECT ... FOR UPDATE serializa aprobaciones simultáneas del mismo hijo. Documentado como defensa. Sin bug activo.
+- [ ] Aprobaciones fuera de orden cronológico no extienden la racha hacia atrás. Mejora futura: trackear días contabilizados o forzar revisión en orden cronológico.
+- [ ] week_complete "≥5 aprobaciones" es arbitrario. Revisar cuando haya familias con menos de 5 tareas por semana (alternativa: 80% de las asignadas).
+- [ ] Smoke test del trigger con UPDATE manual: pendiente al inicio de Parte 2.
+- [ ] PointsBadge (Parte 2): calcular "hoy" en zona America/Lima (Intl.DateTimeFormat con timeZone: 'America/Lima'), no con el TZ del navegador. Sin esto, un hijo en otra zona vería su racha rota a las 9pm.
+
+## Gamificación — deuda Fase 3 (cont.)
+- [ ] Retroactividad: cuando se aplicó la 008, las 7 aprobaciones previas de Sofía no otorgaron puntos ni insignias retroactivamente. Solo se aplica hacia adelante. Si en el futuro queremos dar insignias retroactivas, hay que reprocesar el histórico.
