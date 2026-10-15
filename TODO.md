@@ -32,6 +32,10 @@
 - [ ] Contraste marginal: minimalista dark (3.45:1) y neutro_elegante dark (3.63:1) en on-accent. Pasan el umbral UI-only (3:1) pero no el de texto normal (4.5:1). Los labels de botón son 13-15px bold — revisar si vale subir el contraste o aceptar como decisión de paleta.
 - [ ] Contraste: rosa_suave light/dark tiene accent sobre bg-card ≈2.8:1 (accent como COLOR DE TEXTO, documentado en themes.ts). Issue distinto del on-accent (ya corregido en Fase 5). Evaluar si se acepta como diseño o se corrige.
 
+## Deuda técnica — Lint
+
+- [ ] Lint: 20 errores preexistentes (comillas sin escapar, setState en efecto en ThemeToggle, react-hooks/immutability). No bloquean el build. Limpiar en un bloque dedicado.
+
 ## Limpieza de features específicas de Carlita (post Módulo 0A)
 
 - [ ] Eliminar "🏠 Me quedé en casa" y todo el sistema de "salidas con amigos"
