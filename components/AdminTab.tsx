@@ -28,6 +28,8 @@ interface Props {
   onSignContract: (contractId: string) => void;
   signingContract: boolean;
   signContractError: string | null;
+  /** Abre la pestaña Bienestar (link desde la tendencia emocional). */
+  onOpenResources?: () => void;
 }
 
 type Section = 'tasks' | 'reviews' | 'contract' | 'invites' | 'mundo';
@@ -120,6 +122,7 @@ export default function AdminTab({
   pendingReviews, onApproveCompletion, onRejectCompletion,
   contract, contractSignatures, profile, familyMembers,
   onCreateContract, onSignContract, signingContract, signContractError,
+  onOpenResources,
 }: Props) {
   const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
@@ -467,7 +470,11 @@ export default function AdminTab({
             />
           )}
           {selectedChildId && emotionTrend?.user_id === selectedChildId && (
-            <EmotionTrendCard trend={emotionTrend} childName={selectedChildName ?? 'tu hijo/a'} />
+            <EmotionTrendCard
+              trend={emotionTrend}
+              childName={selectedChildName ?? 'tu hijo/a'}
+              onOpenResources={onOpenResources}
+            />
           )}
           <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginBottom: 16, fontStyle: 'italic' }}>Solo lectura — solo tu hijo/a puede editar esto.</p>
           {visibleMundo.length === 0 ? (

@@ -4,6 +4,8 @@ import type { EmotionTrend, EmotionTrendLabel } from '@/lib/types';
 interface Props {
   trend: EmotionTrend;
   childName: string;
+  /** Si está, muestra "Ver recursos para acompañar →" bajo la guía. */
+  onOpenResources?: () => void;
 }
 
 const LABEL_TEXT: Record<EmotionTrendLabel, string> = {
@@ -62,7 +64,7 @@ function formatRangeLong(start: string, end: string): string {
 }
 
 // Tendencia agregada para el padre (RPC get_emotion_trend): solo etiquetas por semana.
-export default function EmotionTrendCard({ trend, childName }: Props) {
+export default function EmotionTrendCard({ trend, childName, onOpenResources }: Props) {
   if (trend.weeks.every(w => w.label === 'sin-registros')) return null;
 
   // El RPC devuelve weeks[0] = semana actual. Se muestra de la más antigua a la más reciente.
@@ -119,9 +121,25 @@ export default function EmotionTrendCard({ trend, childName }: Props) {
       </div>
 
       {recentHard && (
-        <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.5, marginTop: 12 }}>
-          Una conversación tranquila puede ayudar. Evita preguntarle por sus registros: son privados.
-        </p>
+        <>
+          <p style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.5, marginTop: 12 }}>
+            Una conversación tranquila puede ayudar. Evita preguntarle por sus registros: son privados.
+          </p>
+          {onOpenResources && (
+            <button
+              type="button"
+              onClick={onOpenResources}
+              style={{
+                marginTop: 6, padding: 0, background: 'none', border: 'none',
+                color: 'var(--accent)', fontFamily: 'var(--font-body)',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                textDecoration: 'underline', textUnderlineOffset: 3,
+              }}
+            >
+              Ver recursos para acompañar →
+            </button>
+          )}
+        </>
       )}
 
       <p style={{ fontSize: 12, color: 'var(--ink-soft)', lineHeight: 1.45, marginTop: 10 }}>

@@ -600,7 +600,12 @@ export default function Home() {
   );
 
   const isAdmin = profile?.role === 'padre';
-  const TABS = isAdmin ? [...BASE_TABS, { key: 'admin' as Tab, label: '⚙️ Admin' }] : BASE_TABS;
+  // El padre ve "Mi mundo" solo dentro de Admin → Mi mundo (no como pestaña principal).
+  const TABS = isAdmin
+    ? [...BASE_TABS.filter(t => t.key !== 'mundo'), { key: 'admin' as Tab, label: '⚙️ Admin' }]
+    : BASE_TABS;
+  // Si algo deja tab === 'mundo' con rol padre, cae a Admin.
+  const activeTab: Tab = isAdmin && tab === 'mundo' ? 'admin' : tab;
 
   const HIJO_NAV: NavItem[] = [
     { key: 'week',     icon: '📅', label: 'Semana'   },
@@ -613,7 +618,6 @@ export default function Home() {
   const PADRE_NAV: NavItem[] = [
     { key: 'admin',    icon: '⚙️', label: 'Admin'     },
     { key: 'week',     icon: '📅', label: 'Semana'    },
-    { key: 'mundo',    icon: '💜', label: 'Mi mundo'  },
     { key: 'progress', icon: '📊', label: 'Logros'    },
     { key: 'events',   icon: '🎈', label: 'Eventos'   },
     { key: 'wellness', icon: '💚', label: 'Bienestar' },
@@ -663,13 +667,13 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: '0 0 8px', marginBottom: 16, scrollbarWidth: 'none' }}>
             {TABS.map(t => (
               <button key={t.key} onClick={() => setTab(t.key)}
-                style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 20, background: tab === t.key ? 'var(--accent)' : 'var(--bg-card)', color: tab === t.key ? 'var(--on-accent)' : 'var(--ink-soft)', border: tab === t.key ? '1.5px solid var(--accent)' : '1.5px solid var(--line)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 20, background: activeTab === t.key ? 'var(--accent)' : 'var(--bg-card)', color: activeTab === t.key ? 'var(--on-accent)' : 'var(--ink-soft)', border: activeTab === t.key ? '1.5px solid var(--accent)' : '1.5px solid var(--line)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
                 {t.label}
               </button>
             ))}
           </div>
         </div>
-        {tab === 'week'     && <WeekTab weeks={weeks} tasks={tasks} onChange={handleWeeksChange}
+        {activeTab === 'week'     && <WeekTab weeks={weeks} tasks={tasks} onChange={handleWeeksChange}
           completions={completions}
           role={profile?.role === 'padre' ? 'padre' : 'hijo'}
           onToggleTask={handleToggleTask}
@@ -685,7 +689,7 @@ export default function Home() {
               : <GoldenRules rules={familyRules} />
           }
         />}
-        {tab === 'progress' && (
+        {activeTab === 'progress' && (
           <ProgressTab
             state={{ weeks, events: [] }}
             tasks={tasks}
@@ -697,9 +701,9 @@ export default function Home() {
             currentUserId={profile?.id ?? ''}
           />
         )}
-        {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
-        {tab === 'wellness' && <WellnessTab />}
-        {tab === 'mundo'    && profile && (
+        {activeTab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
+        {activeTab === 'wellness' && <WellnessTab />}
+        {activeTab === 'mundo'    && profile && (
           <MiMundoTab
             familyId={profile.family_id}
             role={profile.role}
@@ -707,7 +711,7 @@ export default function Home() {
             onSaveEmotion={profile.role === 'hijo' ? handleSaveEmotion : undefined}
           />
         )}
-        {tab === 'tema' && profile && (
+        {activeTab === 'tema' && profile && (
           <>
             <AvatarPicker
               userId={profile.id}
@@ -718,7 +722,7 @@ export default function Home() {
             <ThemePicker userId={profile.id} />
           </>
         )}
-        {tab === 'admin'    && isAdmin && profile && (
+        {activeTab === 'admin'    && isAdmin && profile && (
           <AdminTab
             familyId={profile.family_id}
             tasks={tasks}
@@ -737,6 +741,7 @@ export default function Home() {
             onSignContract={handleSignContract}
             signingContract={signingContract}
             signContractError={signContractError}
+            onOpenResources={() => { setTab('wellness'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
           />
         )}
       </div>
@@ -745,7 +750,7 @@ export default function Home() {
       <div className="bottom-nav-outer">
         <BottomNav
           items={navItems}
-          active={tab}
+          active={activeTab}
           onSelect={(key) => setTab(key as Tab)}
         />
       </div>
