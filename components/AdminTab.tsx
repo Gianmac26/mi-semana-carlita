@@ -3,10 +3,11 @@ import { useState, useEffect, useRef } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type {
   DbTask, InviteCode, MiMundoEntry, MiMundoHistory, Profile, TaskCompletion,
-  FamilyContract, ContractSignature,
+  FamilyContract, ContractSignature, EmotionTrend,
 } from '@/lib/types';
 import PendingReviews from '@/components/PendingReviews';
 import ContractEditor from '@/components/ContractEditor';
+import EmotionTrendCard from '@/components/EmotionTrendCard';
 
 interface Props {
   familyId: string;
@@ -81,6 +82,39 @@ const MundoPrompts = [
   { key: 'pedido',   title: '💌 Le pediría a mis papás...' },
 ];
 
+function ChildSelector({ label, childrenProfiles, selectedChildId, onSelectChild }: {
+  label: string;
+  childrenProfiles: Profile[];
+  selectedChildId: string | null;
+  onSelectChild: (id: string) => void;
+}) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <p style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600, margin: '0 0 6px' }}>
+        {label}
+      </p>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {childrenProfiles.map(child => (
+          <button
+            key={child.id}
+            onClick={() => onSelectChild(child.id)}
+            style={{
+              padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700,
+              fontFamily: 'var(--font-title)', cursor: 'pointer',
+              border: `1.5px solid ${selectedChildId === child.id ? 'var(--accent)' : 'var(--line)'}`,
+              background: selectedChildId === child.id ? 'var(--accent)' : 'var(--bg-card)',
+              color: selectedChildId === child.id ? 'var(--on-accent)' : 'var(--ink-soft)',
+              transition: 'all 0.15s',
+            }}
+          >
+            {child.display_name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminTab({
   familyId, tasks, onTasksChange, childrenProfiles, selectedChildId, onSelectChild,
   pendingReviews, onApproveCompletion, onRejectCompletion,
@@ -94,6 +128,7 @@ export default function AdminTab({
   const [newTask, setNewTask] = useState({ icon: '⭐', label: '', time: '', days: ['mon','tue','wed','thu','fri'] as string[], skippable: false });
   const [saving, setSaving] = useState(false);
   const [taskError, setTaskError] = useState('');
+  const [emotionTrend, setEmotionTrend] = useState<EmotionTrend | null>(null);
   const updateTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const pendingPatches = useRef<Record<string, Partial<DbTask>>>({});
 
@@ -101,6 +136,19 @@ export default function AdminTab({
     if (section === 'invites') loadCodes();
     if (section === 'mundo') loadMundo();
   }, [section, familyId]);
+
+  // Tendencia emocional (solo etiquetas por semana) del hijo seleccionado.
+  useEffect(() => {
+    if (section !== 'mundo' || !selectedChildId) return;
+    let ignore = false;
+    (async () => {
+      const { data, error } = await supabase.rpc('get_emotion_trend', { p_user_id: selectedChildId, p_weeks_back: 4 });
+      if (ignore) return;
+      if (error) { console.error('[AdminTab] get_emotion_trend:', error.message); return; }
+      setEmotionTrend((data as EmotionTrend | null) ?? null);
+    })();
+    return () => { ignore = true; };
+  }, [section, selectedChildId]);
 
   async function loadCodes() {
     const { data } = await supabase
@@ -188,6 +236,9 @@ export default function AdminTab({
   }
 
   const sortedTasks = [...tasks].sort((a, b) => a.sort_order - b.sort_order);
+  const selectedChildName = childrenProfiles.find(c => c.id === selectedChildId)?.display_name;
+  const visibleMundo = Object.entries(mundoByAuthor)
+    .filter(([authorId]) => !selectedChildId || authorId === selectedChildId);
 
   return (
     <div>
@@ -218,29 +269,12 @@ export default function AdminTab({
         <div>
           {/* Selector de hijo — visible cuando hay más de un hijo o para contexto */}
           {childrenProfiles.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <p style={{ fontSize: 12, color: 'var(--ink-soft)', fontWeight: 600, margin: '0 0 6px' }}>
-                Vista de semana para:
-              </p>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {childrenProfiles.map(child => (
-                  <button
-                    key={child.id}
-                    onClick={() => onSelectChild(child.id)}
-                    style={{
-                      padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 700,
-                      fontFamily: 'var(--font-title)', cursor: 'pointer',
-                      border: `1.5px solid ${selectedChildId === child.id ? 'var(--accent)' : 'var(--line)'}`,
-                      background: selectedChildId === child.id ? 'var(--accent)' : 'var(--bg-card)',
-                      color: selectedChildId === child.id ? 'var(--on-accent)' : 'var(--ink-soft)',
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {child.display_name}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <ChildSelector
+              label="Vista de semana para:"
+              childrenProfiles={childrenProfiles}
+              selectedChildId={selectedChildId}
+              onSelectChild={onSelectChild}
+            />
           )}
 
           {sortedTasks.length > 0 && (
@@ -424,18 +458,24 @@ export default function AdminTab({
 
       {section === 'mundo' && (
         <div>
+          {childrenProfiles.length > 1 && (
+            <ChildSelector
+              label="Ver a:"
+              childrenProfiles={childrenProfiles}
+              selectedChildId={selectedChildId}
+              onSelectChild={onSelectChild}
+            />
+          )}
+          {selectedChildId && emotionTrend?.user_id === selectedChildId && (
+            <EmotionTrendCard trend={emotionTrend} childName={selectedChildName ?? 'tu hijo/a'} />
+          )}
           <p style={{ color: 'var(--ink-soft)', fontSize: 13, marginBottom: 16, fontStyle: 'italic' }}>Solo lectura — solo tu hijo/a puede editar esto.</p>
-          {Object.keys(mundoByAuthor).length === 0 ? (
+          {visibleMundo.length === 0 ? (
             <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '20px 0' }}>
-              Tu hijo/a todavía no ha escrito nada.
+              {selectedChildName ? `${selectedChildName} todavía no ha escrito nada.` : 'Tu hijo/a todavía no ha escrito nada.'}
             </p>
-          ) : Object.entries(mundoByAuthor).map(([authorId, { displayName, history }]) => (
+          ) : visibleMundo.map(([authorId, { history }]) => (
             <div key={authorId} style={{ marginBottom: 24 }}>
-              {Object.keys(mundoByAuthor).length > 1 && (
-                <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13, color: 'var(--accent)', marginBottom: 10 }}>
-                  {displayName}
-                </h4>
-              )}
               {MundoPrompts.map(p => {
                 const entries = history[p.key] ?? [];
                 const latest  = entries[0];

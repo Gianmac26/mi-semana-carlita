@@ -145,8 +145,9 @@ export default function EmotionTracker({ initialLog, onSave }: Props) {
               onClick={() => { setIntensity(value); touch(); }}
               style={{
                 flex: 1, minWidth: 0, minHeight: 48, borderRadius: 14, cursor: 'pointer', padding: 0,
-                fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 18, color: 'var(--ink)',
-                background: selected ? 'var(--accent-soft)' : 'var(--bg-card)',
+                fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 18,
+                color: selected ? 'var(--on-accent)' : 'var(--ink)',
+                background: selected ? 'var(--accent)' : 'var(--bg-card)',
                 border: `2px solid ${selected ? 'var(--accent)' : 'var(--line)'}`,
               }}
             >
