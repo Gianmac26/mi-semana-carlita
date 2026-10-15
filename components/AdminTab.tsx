@@ -8,8 +8,14 @@ import type {
 import PendingReviews from '@/components/PendingReviews';
 import ContractEditor from '@/components/ContractEditor';
 import EmotionTrendCard from '@/components/EmotionTrendCard';
+import type { ContractRule } from '@/lib/contract';
+
+export type AdminSection = 'tasks' | 'reviews' | 'contract' | 'invites' | 'mundo';
 
 interface Props {
+  /** Sección activa, controlada desde page.tsx (permite abrir Contrato desde Semana). */
+  section: AdminSection;
+  onSectionChange: (section: AdminSection) => void;
   familyId: string;
   tasks: DbTask[];
   onTasksChange: (tasks: DbTask[]) => void;
@@ -24,15 +30,15 @@ interface Props {
   contractSignatures: ContractSignature[];
   profile: Profile;
   familyMembers: Profile[];
-  onCreateContract: (intro: string) => Promise<boolean>;
+  /** Reglas de oro vigentes: precargan el editor del contrato. */
+  currentRules: ContractRule[];
+  onCreateContract: (intro: string, rules: ContractRule[]) => Promise<string | null>;
   onSignContract: (contractId: string) => void;
   signingContract: boolean;
   signContractError: string | null;
   /** Abre la pestaña Bienestar (link desde la tendencia emocional). */
   onOpenResources?: () => void;
 }
-
-type Section = 'tasks' | 'reviews' | 'contract' | 'invites' | 'mundo';
 
 const supabase = createBrowserClient();
 
@@ -118,13 +124,13 @@ function ChildSelector({ label, childrenProfiles, selectedChildId, onSelectChild
 }
 
 export default function AdminTab({
+  section, onSectionChange: setSection,
   familyId, tasks, onTasksChange, childrenProfiles, selectedChildId, onSelectChild,
   pendingReviews, onApproveCompletion, onRejectCompletion,
   contract, contractSignatures, profile, familyMembers,
-  onCreateContract, onSignContract, signingContract, signContractError,
+  currentRules, onCreateContract, onSignContract, signingContract, signContractError,
   onOpenResources,
 }: Props) {
-  const [section, setSection] = useState<Section>('tasks');
   const [codes, setCodes] = useState<InviteCode[]>([]);
   const [mundoByAuthor, setMundoByAuthor] = useState<Record<string, { displayName: string; history: MiMundoHistory }>>({});
   const [expandedAdminMundo, setExpandedAdminMundo] = useState<Set<string>>(new Set());
@@ -260,7 +266,7 @@ export default function AdminTab({
           ['contract', '🤝 Contrato'],
           ['invites', '🔑 Invitaciones'],
           ['mundo', '💜 Mi mundo'],
-        ] as [Section, string][]).map(([key, label]) => (
+        ] as [AdminSection, string][]).map(([key, label]) => (
           <button key={key} onClick={() => setSection(key)}
             style={{ flexShrink: 0, minWidth: 90, padding: '9px 14px', borderRadius: 12, border: `1.5px solid ${section === key ? 'var(--accent)' : 'var(--line)'}`, background: section === key ? 'var(--accent)' : 'var(--bg-card)', color: section === key ? 'var(--on-accent)' : 'var(--ink-soft)', fontFamily: 'var(--font-title)', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}>
             {label}
@@ -426,6 +432,7 @@ export default function AdminTab({
           signatures={contractSignatures}
           profile={profile}
           familyMembers={familyMembers}
+          currentRules={currentRules}
           onCreate={onCreateContract}
           onSign={onSignContract}
           signing={signingContract}

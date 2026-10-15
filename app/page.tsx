@@ -4,10 +4,10 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import type {
   Profile, DbTask, AppState, DayState, UserPreferences, TaskCompletion,
   PointsLedgerEntry, Streak, BadgeEntry, FamilyContract, ContractSignature,
-  EmotionLog, EmotionLabel,
+  EmotionLog, EmotionLabel, FamilyRule,
 } from '@/lib/types';
 import type { DayKey } from '@/lib/tasks';
-import type { CreateContractResult } from '@/lib/contract';
+import type { CreateContractResult, ContractRule } from '@/lib/contract';
 import type { PaletteId, ThemeMode } from '@/lib/themes';
 import { ROLE_DEFAULT_PALETTE, DEFAULT_PALETTE } from '@/lib/themes';
 import StatusIndicator from '@/components/StatusIndicator';
@@ -16,9 +16,8 @@ import ProgressTab from '@/components/ProgressTab';
 import EventsTab from '@/components/EventsTab';
 import WellnessTab from '@/components/WellnessTab';
 import MiMundoTab from '@/components/MiMundoTab';
-import AdminTab from '@/components/AdminTab';
+import AdminTab, { type AdminSection } from '@/components/AdminTab';
 import GoldenRules from '@/components/GoldenRules';
-import GoldenRulesEditor, { type FamilyRule } from '@/components/GoldenRulesEditor';
 import ThemeToggle from '@/components/ThemeToggle';
 import ThemePicker from '@/components/ThemePicker';
 import AvatarPicker from '@/components/AvatarPicker';
@@ -51,6 +50,7 @@ export default function Home() {
   const [weeks,       setWeeks]       = useState<AppState['weeks']>({});
   const [saveStatus,  setSaveStatus]  = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [tab,              setTab]              = useState<Tab>('week');
+  const [adminSection,     setAdminSection]     = useState<AdminSection>('tasks');
   const [codeInput,        setCodeInput]        = useState('');
   const [codeError,        setCodeError]        = useState('');
   const [codeLoading,      setCodeLoading]      = useState(false);
@@ -459,14 +459,26 @@ export default function Home() {
     setSigningContract(false);
   }
 
-  async function handleCreateContract(intro: string): Promise<boolean> {
-    const { data, error } = await supabase.rpc('create_family_contract', { p_intro: intro });
+  // Crea el contrato y reemplaza las Reglas de oro en la misma transacción (RPC 012).
+  // Devuelve null si salió bien, o el mensaje de error para mostrar en el editor.
+  async function handleCreateContract(intro: string, rules: ContractRule[]): Promise<string | null> {
+    if (!profile) return 'No se pudo crear el contrato. Recarga la página e intenta de nuevo.';
+    const { data, error } = await supabase.rpc('create_family_contract', { p_intro: intro, p_rules: rules });
     if (error) {
       console.error('[page] crear contrato:', error.message);
-      return false;
+      // P0001 = raise exception de la RPC (mensajes de validación en español).
+      return error.code === 'P0001'
+        ? error.message
+        : 'No se pudo crear el contrato. Revisa tu conexión e intenta de nuevo.';
     }
     const newContract = data as CreateContractResult;
     setContract(newContract);
+
+    // Recargar Reglas de oro: la RPC las reemplazó por las del contrato.
+    const { data: ruleRows } = await supabase
+      .from('family_rules').select('*')
+      .eq('family_id', profile.family_id).eq('active', true).order('sort_order');
+    setFamilyRules((ruleRows as FamilyRule[]) ?? []);
 
     // Recargar firmas del nuevo contrato (el RPC firmó al padre automáticamente).
     const { data: signatureRows } = await supabase
@@ -474,7 +486,14 @@ export default function Home() {
       .select('*')
       .eq('contract_id', newContract.id);
     setContractSignatures((signatureRows as ContractSignature[]) ?? []);
-    return true;
+    return null;
+  }
+
+  // Semana → "Editar en Contrato →": las reglas solo se editan desde el contrato.
+  function openContractEditor() {
+    setAdminSection('contract');
+    setTab('admin');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // ── Tracking emocional (Módulo 2, Fase 4) ───────────────────────────────────
@@ -684,8 +703,12 @@ export default function Home() {
               : childrenProfiles.find(c => c.id === selectedChildId)?.display_name
           }
           rulesSlot={
-            profile?.role === 'padre' && profile
-              ? <GoldenRulesEditor familyId={profile.family_id} rules={familyRules} onRulesChange={setFamilyRules} />
+            profile?.role === 'padre'
+              ? <GoldenRules
+                  rules={familyRules}
+                  emptyText="Aún no definen Reglas de oro. Créenlas juntos en el Contrato familiar."
+                  onEdit={openContractEditor}
+                />
               : <GoldenRules rules={familyRules} />
           }
         />}
@@ -724,6 +747,8 @@ export default function Home() {
         )}
         {activeTab === 'admin'    && isAdmin && profile && (
           <AdminTab
+            section={adminSection}
+            onSectionChange={setAdminSection}
             familyId={profile.family_id}
             tasks={tasks}
             onTasksChange={setTasks}
@@ -737,6 +762,7 @@ export default function Home() {
             contractSignatures={contractSignatures}
             profile={profile}
             familyMembers={familyMembers}
+            currentRules={familyRules}
             onCreateContract={handleCreateContract}
             onSignContract={handleSignContract}
             signingContract={signingContract}

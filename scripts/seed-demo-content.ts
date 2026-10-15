@@ -1,7 +1,7 @@
 // scripts/seed-demo-content.ts
 // Paso 2 de 2 del seed demo.
 // Crea: tareas (8), eventos (3), mi_mundo_entries (8), global_resources (3),
-//       family_rules (5), wellness_resources (8).
+//       family_rules (6, de EXAMPLE_RULES), wellness_resources (8).
 // Prerrequisito: seed-demo-users.ts ya corrido (familia + profiles en DB)
 //                y migración 005_wellness_resources.sql aplicada.
 //
@@ -10,6 +10,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { getMondayOfWeek, formatWeekKey } from '../lib/utils';
+import { EXAMPLE_RULES } from '../lib/contract';
 
 // Carga .env.local sin dotenv
 // NOTA: no maneja comillas con contenido interno. Suficiente para el demo.
@@ -224,13 +225,8 @@ async function main() {
 
   console.log('\n── 5. family_rules');
 
-  const RULES = [
-    { emoji: '📵', text: 'Sin celular en horario de estudio — solo música', sort_order: 0 },
-    { emoji: '🛏️', text: 'El celular duerme en el escritorio, no en la cama', sort_order: 1 },
-    { emoji: '⏰', text: 'Hora tope para dormir: 10:00 pm, lunes a viernes', sort_order: 2 },
-    { emoji: '🍽️', text: 'Lavar los servicios inmediatamente después de usarlos', sort_order: 3 },
-    { emoji: '🏡', text: 'Cada vez que pueda, ayudar con la limpieza de casa', sort_order: 4 },
-  ];
+  // Mismas reglas que los chips "Ideas para empezar" del editor de contrato.
+  const RULES = EXAMPLE_RULES.map((r, i) => ({ ...r, sort_order: i }));
 
   for (const r of RULES) {
     const { error } = await supa.from('family_rules').upsert(

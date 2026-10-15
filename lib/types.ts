@@ -179,6 +179,17 @@ export interface BadgeEntry {
   notified_at: string | null;
 }
 
+// ── Reglas de oro (002; escritura solo vía create_family_contract desde 012) ─
+
+export interface FamilyRule {
+  id: string;
+  family_id: string;
+  emoji: string;
+  text: string;
+  sort_order: number;
+  active: boolean;
+}
+
 // ── Contrato familiar (Fase 4 — migración 009) ───────────────────────────────
 
 export interface FamilyContract {

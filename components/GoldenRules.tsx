@@ -6,13 +6,35 @@ interface Rule {
 
 interface Props {
   rules: Rule[];
+  /** Texto cuando no hay reglas (por defecto, el mensaje para el hijo). */
+  emptyText?: string;
+  /** Padre: muestra "Editar en Contrato →" (las reglas solo se editan desde el contrato). */
+  onEdit?: () => void;
 }
 
-export default function GoldenRules({ rules }: Props) {
+const DEFAULT_EMPTY_TEXT = 'Tu familia aún no ha definido reglas. Pídele a tu papá o mamá que agregue algunas.';
+
+export default function GoldenRules({ rules, emptyText = DEFAULT_EMPTY_TEXT, onEdit }: Props) {
+  const editLink = onEdit && (
+    <button
+      type="button"
+      onClick={onEdit}
+      style={{
+        marginTop: 10, padding: 0, background: 'none', border: 'none',
+        color: 'var(--accent)', fontFamily: 'var(--font-body)',
+        fontSize: 13, fontWeight: 600, cursor: 'pointer',
+        textDecoration: 'underline', textUnderlineOffset: 3,
+      }}
+    >
+      Editar en Contrato →
+    </button>
+  );
+
   if (rules.length === 0) {
     return (
       <div style={{ marginTop: 28, textAlign: 'center', color: 'var(--ink-soft)', fontSize: 14, fontStyle: 'italic' }}>
-        Tu familia aún no ha definido reglas. Pídele a tu papá o mamá que agregue algunas.
+        {emptyText}
+        {editLink && <div style={{ fontStyle: 'normal' }}>{editLink}</div>}
       </div>
     );
   }
@@ -42,6 +64,7 @@ export default function GoldenRules({ rules }: Props) {
           </div>
         ))}
       </div>
+      {editLink}
     </div>
   );
 }
