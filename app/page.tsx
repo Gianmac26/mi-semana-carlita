@@ -4,6 +4,7 @@ import { createBrowserClient } from '@/lib/supabase/client';
 import type {
   Profile, DbTask, AppState, DayState, UserPreferences, TaskCompletion,
   PointsLedgerEntry, Streak, BadgeEntry, FamilyContract, ContractSignature,
+  EmotionLog, EmotionLabel,
 } from '@/lib/types';
 import type { DayKey } from '@/lib/tasks';
 import type { CreateContractResult } from '@/lib/contract';
@@ -23,7 +24,7 @@ import ThemePicker from '@/components/ThemePicker';
 import AvatarPicker from '@/components/AvatarPicker';
 import PointsBadge from '@/components/PointsBadge';
 import BadgeToast from '@/components/BadgeToast';
-import { getTotalPoints, getCurrentStreak } from '@/lib/gamification';
+import { getTotalPoints, getCurrentStreak, hoyLima } from '@/lib/gamification';
 import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
 import TaskDetailSheet from '@/components/TaskDetailSheet';
@@ -67,6 +68,8 @@ export default function Home() {
   const [pointsLedger, setPointsLedger] = useState<PointsLedgerEntry[]>([]);
   const [streak,       setStreak]       = useState<Streak | null>(null);
   const [badges,       setBadges]       = useState<BadgeEntry[]>([]);
+  // Tracking emocional (010, solo hijo): últimos 30 registros propios. El padre nunca los carga.
+  const [emotionLogs,  setEmotionLogs]  = useState<EmotionLog[]>([]);
   // Contrato familiar (Fase 4): contrato activo + sus firmas + miembros (ambos roles)
   const [contract,           setContract]           = useState<FamilyContract | null>(null);
   const [contractSignatures, setContractSignatures] = useState<ContractSignature[]>([]);
@@ -180,17 +183,20 @@ export default function Home() {
         { data: ledgerRows, error: ledgerErr },
         { data: streakRow,  error: streakErr },
         { data: badgeRows,  error: badgeErr },
+        { data: emotionRows, error: emotionErr },
       ] = await Promise.all([
         supabase.from('weekly_state').select('*').eq('family_id', p.family_id).eq('user_id', p.id),
         supabase.from('task_completions').select('*').eq('family_id', p.family_id).eq('user_id', p.id),
         supabase.from('points_ledger').select('*').eq('user_id', p.id),
         supabase.from('streaks').select('*').eq('user_id', p.id).maybeSingle(),
         supabase.from('badges').select('*').eq('user_id', p.id),
+        supabase.from('emotion_logs').select('*').eq('user_id', p.id).order('log_date', { ascending: false }).limit(30),
       ]);
       if (completionErr) console.error('[page] task_completions:', completionErr.message);
       if (ledgerErr)     console.error('[page] points_ledger:', ledgerErr.message);
       if (streakErr)     console.error('[page] streaks:', streakErr.message);
       if (badgeErr)      console.error('[page] badges:', badgeErr.message);
+      if (emotionErr)    console.error('[page] emotion_logs:', emotionErr.message);
 
       setCompletions((completionRows as TaskCompletion[]) ?? []);
       const assembled: AppState['weeks'] = {};
@@ -202,6 +208,7 @@ export default function Home() {
       setPointsLedger((ledgerRows as PointsLedgerEntry[]) ?? []);
       setStreak((streakRow as Streak | null) ?? null);
       setBadges((badgeRows as BadgeEntry[]) ?? []);
+      setEmotionLogs((emotionRows as EmotionLog[]) ?? []);
     }
     setPageState('ready');
   }
@@ -470,6 +477,55 @@ export default function Home() {
     return true;
   }
 
+  // ── Tracking emocional (Módulo 2, Fase 4) ───────────────────────────────────
+
+  async function handleSaveEmotion(emotion: EmotionLabel, intensity: number, note: string): Promise<boolean> {
+    if (!profile || profile.role !== 'hijo') return false;
+    const today = hoyLima();
+    const payload = {
+      user_id: profile.id,
+      family_id: profile.family_id,
+      log_date: today,
+      emotion,
+      intensity,
+      note: note.trim() || null,
+    };
+
+    const prev = emotionLogs;
+    const existing = prev.find(l => l.log_date === today);
+    const optimistic: EmotionLog = {
+      id: existing?.id ?? `temp-${Date.now()}`,
+      user_id: profile.id,
+      family_id: profile.family_id,
+      log_date: today,
+      emotion,
+      intensity,
+      note: payload.note,
+      created_at: existing?.created_at ?? new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    setEmotionLogs([optimistic, ...prev.filter(l => l.log_date !== today)]);
+
+    const { data, error } = await supabase
+      .from('emotion_logs')
+      .upsert(payload, { onConflict: 'user_id,log_date' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[page] guardar emoción:', error.message);
+      setEmotionLogs(prev);
+      return false;
+    }
+    setEmotionLogs(current => [data as EmotionLog, ...current.filter(l => l.log_date !== today)]);
+
+    // Recargar badges: el trigger pudo otorgar first_emotion_log.
+    const { data: badgeRows } = await supabase.from('badges').select('*').eq('user_id', profile.id);
+    setBadges((badgeRows as BadgeEntry[]) ?? []);
+
+    return true;
+  }
+
   function handleOpenTaskDetail(task: DbTask, weekKey: string, day: DayKey) {
     setTaskDetailTask(task);
     setTaskDetailWeekKey(weekKey);
@@ -643,7 +699,14 @@ export default function Home() {
         )}
         {tab === 'events'   && profile && <EventsTab familyId={profile.family_id} role={profile.role} />}
         {tab === 'wellness' && <WellnessTab />}
-        {tab === 'mundo'    && profile && <MiMundoTab familyId={profile.family_id} role={profile.role} />}
+        {tab === 'mundo'    && profile && (
+          <MiMundoTab
+            familyId={profile.family_id}
+            role={profile.role}
+            emotionLogs={profile.role === 'hijo' ? emotionLogs : undefined}
+            onSaveEmotion={profile.role === 'hijo' ? handleSaveEmotion : undefined}
+          />
+        )}
         {tab === 'tema' && profile && (
           <>
             <AvatarPicker

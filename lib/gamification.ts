@@ -54,3 +54,10 @@ export function formatPoints(n: number): string {
   if (n < 1000) return String(n);
   return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
 }
+
+/** Suma n días a una fecha 'YYYY-MM-DD' trabajando solo en UTC (no depende de la zona horaria del dispositivo). */
+export function addDays(dateStr: string, n: number): string {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}

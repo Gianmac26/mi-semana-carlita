@@ -3,8 +3,20 @@ import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@/lib/supabase/client';
 import type { MiMundoEntry, MiMundoHistory } from '@/lib/types';
 import { getMondayOfWeek, formatWeekKey } from '@/lib/utils';
+import EmotionTracker from '@/components/EmotionTracker';
+import EmotionWeeklyRow from '@/components/EmotionWeeklyRow';
+import EmotionSupportCard from '@/components/EmotionSupportCard';
+import { useHelpSheet } from '@/components/HelpSheetProvider';
+import { hoyLima } from '@/lib/gamification';
+import type { EmotionLog, EmotionLabel } from '@/lib/types';
 
-interface Props { familyId: string; role: string; }
+interface Props {
+  familyId: string;
+  role: string;
+  /** Tracking emocional (solo hijo): el padre no recibe estas props. */
+  emotionLogs?: EmotionLog[];
+  onSaveEmotion?: (emotion: EmotionLabel, intensity: number, note: string) => Promise<boolean>;
+}
 
 interface PromptDef {
   key: string;
@@ -50,8 +62,9 @@ function getCurrentWeekKey() {
 
 type AuthorData = { displayName: string; history: MiMundoHistory };
 
-export default function MiMundoTab({ familyId, role }: Props) {
+export default function MiMundoTab({ familyId, role, emotionLogs, onSaveEmotion }: Props) {
   const [supabase] = useState(() => createBrowserClient());
+  const { open: openHelp } = useHelpSheet();
 
   // ── Hijo state ──────────────────────────────────────────────────────────────
   const [userId,     setUserId]     = useState<string | null>(null);
@@ -252,6 +265,7 @@ export default function MiMundoTab({ familyId, role }: Props) {
 
   // ─── HIJO view ──────────────────────────────────────────────────────────────
   const currentWeekKey = getCurrentWeekKey();
+  const today = hoyLima();
   return (
     <div>
       <div style={{
@@ -263,10 +277,28 @@ export default function MiMundoTab({ familyId, role }: Props) {
           💜 Mi mundo
         </h3>
         <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
-          Este espacio es tuyo. Escribe lo que quieras — tus papás también lo leen,
-          así que es una forma bonita de que te conozcan mejor. 🌸
+          Este espacio es tuyo. Tu registro de emociones es solo para ti; las respuestas de abajo también las leen tus papás 🌸
         </p>
       </div>
+
+      {/* Tracking emocional: la tarjeta de apoyo va primero porque, cuando aparece, es lo más importante. */}
+      {emotionLogs && onSaveEmotion && (
+        <>
+          <EmotionSupportCard logs={emotionLogs} onOpenHelp={openHelp} />
+          <EmotionTracker
+            initialLog={emotionLogs.find(l => l.log_date === today) ?? null}
+            onSave={onSaveEmotion}
+          />
+          <EmotionWeeklyRow logs={emotionLogs} todayKey={today} />
+        </>
+      )}
+
+      <h4 style={{
+        fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15,
+        color: 'var(--ink)', margin: '8px 0 10px',
+      }}>
+        💬 Para compartir con tus papás
+      </h4>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {PROMPTS.map(p => {

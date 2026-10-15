@@ -113,4 +113,7 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 - Decisión aceptada: el padre ve `first_emotion_log` (indica hábito, no estado emocional).
 - Privacidad de la nota: "tu familia no puede verla" en la UI (no "nadie", porque los admins técnicamente sí).
 - Riesgo residual aceptado: la etiqueta de la semana actual se recalcula a diario; un padre podría inferir días puntuales por cambios de etiqueta. Mitigado por etiquetas gruesas + mínimo 3 registros.
+- Modelo: 6 emociones básicas (Ekman) + intensidad 1–5. El bienestar se deriva con emotion_wellbeing() (SQL) / emotionWellbeing() (TS); cualquier cambio a la tabla se hace en ambos.
+- [ ] Validar con un psicólogo la tabla de bienestar y el umbral de la tarjeta de apoyo antes del lanzamiento real.
 - [ ] Parte 2: `EmotionMeta.key` puede ser `null` (EMOTION_FALLBACK). No usarlo como React key sin fallback.
+- [ ] Si el hijo deja la app abierta pasada la medianoche, el tracker muestra el registro de ayer como "hoy" hasta recargar. Misma limitación que el resto de la app.

@@ -202,16 +202,17 @@ export interface ContractSignature {
 
 // ── Tracking emocional (Módulo 2, Fase 4 — migración 010) ────────────────────
 
+// Las 6 emociones básicas de Ekman (migración 011).
 export type EmotionLabel =
-  | 'alegria' | 'tristeza' | 'enojo' | 'miedo'
-  | 'calma' | 'ansiedad' | 'orgullo' | 'cansancio';
+  | 'alegria' | 'tristeza' | 'miedo' | 'ira' | 'asco' | 'sorpresa';
 
 export interface EmotionLog {
   id: string;
   user_id: string;
   family_id: string;
   log_date: string;
-  mood: number;
+  /** Intensidad de la emoción elegida, 1-5 (no es bienestar; ver emotionWellbeing). */
+  intensity: number;
   emotion: EmotionLabel;
   note: string | null;
   created_at: string;
