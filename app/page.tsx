@@ -28,6 +28,7 @@ import BottomNav, { type NavItem } from '@/components/BottomNav';
 import HelpButton from '@/components/HelpButton';
 import TaskDetailSheet from '@/components/TaskDetailSheet';
 import ContractSheet from '@/components/ContractSheet';
+import ContractPendingNotice from '@/components/ContractPendingNotice';
 
 type PageState = 'loading' | 'no-profile-first' | 'no-profile-code' | 'ready';
 type Tab = 'week' | 'progress' | 'events' | 'wellness' | 'mundo' | 'admin' | 'tema';
@@ -709,7 +710,17 @@ export default function Home() {
                   emptyText="Aún no definen Reglas de oro. Créenlas juntos en el Contrato familiar."
                   onEdit={openContractEditor}
                 />
-              : <GoldenRules rules={familyRules} />
+              : <>
+                  <GoldenRules rules={familyRules} />
+                  {profile && (
+                    <ContractPendingNotice
+                      contract={contract}
+                      signatures={contractSignatures}
+                      userId={profile.id}
+                      onOpen={() => setContractSheetOpen(true)}
+                    />
+                  )}
+                </>
           }
         />}
         {activeTab === 'progress' && (

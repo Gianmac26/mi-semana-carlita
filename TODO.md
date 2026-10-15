@@ -104,9 +104,9 @@ Verificación del 2026-10-10 contra fuentes oficiales (gob.pe/MINSA, gob.pe/MIMP
 - [ ] El padre no ve las insignias de sus hijos en la pestaña Logros. Hoy la galería se muestra solo al hijo. Mejora futura: cargar insignias del hijo seleccionado para el padre (requiere query filtrada por selectedChildId + estado nuevo).
 
 ## Contrato familiar — deuda Fase 4
-- [ ] Los hijos que firmaron una versión anterior no reciben aviso de versión nueva pendiente. Mejora futura: badge/toast.
+- [x] Los hijos que firmaron una versión anterior no reciben aviso de versión nueva pendiente. Resuelto: el mismo aviso en Semana (ContractPendingNotice) cubre cualquier versión activa sin su firma.
 - [ ] Las firmas no se pueden deshacer (inmutabilidad por diseño, aplicado en DB).
-- [ ] Los hijos que aún no firman no ven recordatorio. Podría ir en Progreso o en header.
+- [x] Los hijos que aún no firman no ven recordatorio. Resuelto: aviso en Semana (ContractPendingNotice) que abre el ContractSheet.
 - [x] Al activar contract_signed en lib/badges.ts (Parte 2), revisar que la insignia aparezca en la galería.
 - [ ] Contrato fase 2 (por decidir): hijos proponen reglas y el padre las aprueba para la siguiente versión.
 
