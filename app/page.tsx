@@ -740,7 +740,6 @@ export default function Home() {
         {activeTab === 'mundo'    && profile && (
           <MiMundoTab
             familyId={profile.family_id}
-            role={profile.role}
             emotionLogs={profile.role === 'hijo' ? emotionLogs : undefined}
             onSaveEmotion={profile.role === 'hijo' ? handleSaveEmotion : undefined}
           />

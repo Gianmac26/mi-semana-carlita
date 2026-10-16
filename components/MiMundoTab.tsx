@@ -12,7 +12,6 @@ import type { EmotionLog, EmotionLabel } from '@/lib/types';
 
 interface Props {
   familyId: string;
-  role: string;
   /** Tracking emocional (solo hijo): el padre no recibe estas props. */
   emotionLogs?: EmotionLog[];
   onSaveEmotion?: (emotion: EmotionLabel, intensity: number, note: string) => Promise<boolean>;
@@ -60,9 +59,7 @@ function getCurrentWeekKey() {
   return formatWeekKey(getMondayOfWeek(new Date()));
 }
 
-type AuthorData = { displayName: string; history: MiMundoHistory };
-
-export default function MiMundoTab({ familyId, role, emotionLogs, onSaveEmotion }: Props) {
+export default function MiMundoTab({ familyId, emotionLogs, onSaveEmotion }: Props) {
   const [supabase] = useState(() => createBrowserClient());
   const { open: openHelp } = useHelpSheet();
 
@@ -75,14 +72,9 @@ export default function MiMundoTab({ familyId, role, emotionLogs, onSaveEmotion 
   const [editingId,  setEditingId]  = useState<string | null>(null);
   const [editDraft,  setEditDraft]  = useState('');
 
-  // ── Padre state ──────────────────────────────────────────────────────────────
-  const [mundoByAuthor,  setMundoByAuthor]  = useState<Record<string, AuthorData>>({});
-  const [expandedPadre,  setExpandedPadre]  = useState<Set<string>>(new Set());
-
   useEffect(() => {
-    if (role === 'padre') loadPadre();
-    else loadHijo();
-  }, [familyId, role]); // eslint-disable-line react-hooks/exhaustive-deps
+    loadHijo();
+  }, [familyId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Load ──────────────────────────────────────────────────────────────────
 
@@ -103,28 +95,6 @@ export default function MiMundoTab({ familyId, role, emotionLogs, onSaveEmotion 
       grouped[row.key].push(row as MiMundoEntry);
     }
     setHistory(grouped);
-  }
-
-  async function loadPadre() {
-    const { data: entries } = await supabase
-      .from('mi_mundo_entries')
-      .select('id, family_id, author_id, key, value, week_key, created_at, updated_at')
-      .eq('family_id', familyId)
-      .order('week_key', { ascending: false });
-    if (!entries?.length) { setMundoByAuthor({}); return; }
-    const authorIds = [...new Set(entries.map(e => e.author_id as string))];
-    const { data: profiles } = await supabase
-      .from('profiles').select('id, display_name').in('id', authorIds);
-    const nameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name as string]));
-    const grouped: Record<string, AuthorData> = {};
-    for (const row of entries) {
-      if (!grouped[row.author_id])
-        grouped[row.author_id] = { displayName: nameMap[row.author_id] ?? 'Hijo/a', history: {} };
-      const h = grouped[row.author_id].history;
-      if (!h[row.key]) h[row.key] = [];
-      h[row.key].push(row as MiMundoEntry);
-    }
-    setMundoByAuthor(grouped);
   }
 
   // ─── Hijo actions ──────────────────────────────────────────────────────────
@@ -173,94 +143,6 @@ export default function MiMundoTab({ familyId, role, emotionLogs, onSaveEmotion 
 
   function toggleExpanded(key: string) {
     setExpanded(prev => { const s = new Set(prev); s.has(key) ? s.delete(key) : s.add(key); return s; });
-  }
-
-  function toggleExpandedPadre(combo: string) {
-    setExpandedPadre(prev => { const s = new Set(prev); s.has(combo) ? s.delete(combo) : s.add(combo); return s; });
-  }
-
-  // ─── PADRE view ─────────────────────────────────────────────────────────────
-  if (role === 'padre') {
-    return (
-      <div>
-        <div style={{
-          background: 'linear-gradient(135deg, var(--accent-soft), var(--lilac-soft))',
-          borderRadius: 20, padding: '18px 20px', marginBottom: 24,
-          border: '1.5px solid var(--line)',
-        }}>
-          <h3 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 20, color: 'var(--accent)', marginBottom: 4 }}>
-            💜 Mi mundo
-          </h3>
-          <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
-            Solo lectura — solo tu hijo/a puede editar esto. 🌸
-          </p>
-        </div>
-
-        {Object.keys(mundoByAuthor).length === 0 ? (
-          <p style={{ textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', padding: '32px 0' }}>
-            Tu hijo/a todavía no ha escrito nada.
-          </p>
-        ) : Object.entries(mundoByAuthor).map(([authorId, { displayName, history: ah }]) => (
-          <div key={authorId} style={{ marginBottom: 32 }}>
-            {Object.keys(mundoByAuthor).length > 1 && (
-              <h4 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 15, color: 'var(--accent)', marginBottom: 12 }}>
-                {displayName}
-              </h4>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {PROMPTS.map(p => {
-                const entries = ah[p.key] ?? [];
-                const latest  = entries[0];
-                const combo    = `${authorId}__${p.key}`;
-                const isOpen   = expandedPadre.has(combo);
-                return (
-                  <div key={p.key} style={{
-                    borderRadius: 18, overflow: 'hidden',
-                    border: '1.5px solid var(--line)', background: 'var(--bg-card)',
-                    boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
-                  }}>
-                    <div style={{ background: p.colorSoft, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 20 }}>{p.emoji}</span>
-                      <span style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: 13.5, color: p.color, lineHeight: 1.3, flex: 1 }}>
-                        {p.title}
-                      </span>
-                    </div>
-                    <div style={{ padding: '12px 16px' }}>
-                      {!latest ? (
-                        <div style={{ fontSize: 14, color: 'var(--ink-soft)', fontStyle: 'italic' }}>(sin responder todavía)</div>
-                      ) : (
-                        <>
-                          <div style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 600, marginBottom: 4 }}>
-                            {formatWeek(latest.week_key)}
-                          </div>
-                          <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>{latest.value}</div>
-                          {entries.length > 1 && (
-                            <button onClick={() => toggleExpandedPadre(combo)}
-                              style={{ marginTop: 10, background: 'none', border: 'none', color: p.color, fontFamily: 'var(--font-body)', fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0 }}>
-                              {isOpen ? '▲ Ocultar anteriores' : `▼ Ver histórico (${entries.length - 1} más)`}
-                            </button>
-                          )}
-                          {isOpen && (
-                            <div style={{ marginTop: 12, borderTop: '1px solid var(--line)', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                              {entries.slice(1).map(e => (
-                                <div key={e.id} style={{ borderRadius: 10, background: 'var(--bg)', padding: '8px 12px' }}>
-                                  <div style={{ fontSize: 11, color: 'var(--ink-soft)', fontWeight: 600, marginBottom: 3 }}>{formatWeek(e.week_key)}</div>
-                                  <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.55 }}>{e.value}</div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-    );
   }
 
   // ─── HIJO view ──────────────────────────────────────────────────────────────

@@ -225,16 +225,30 @@ async function main() {
 
   console.log('\n── 5. family_rules');
 
-  // Mismas reglas que los chips "Ideas para empezar" del editor de contrato.
-  const RULES = EXAMPLE_RULES.map((r, i) => ({ ...r, sort_order: i }));
+  // Desde la migración 013, family_rules solo se escribe vía la RPC create_family_contract, que
+  // reemplaza las reglas y guarda el mismo rules_snapshot en una sola transacción. Este seed usa
+  // service_role (salta RLS): si la familia ya tiene un contrato activo, escribir aquí dejaría las
+  // Reglas de oro de Semana distintas a las del contrato. En ese caso se omite este paso.
+  const { data: activeContract, error: contractError } = await supa
+    .from('family_contracts').select('version')
+    .eq('family_id', familyId).eq('active', true)
+    .maybeSingle();
+  if (contractError) throw new Error(`Leer contrato activo: ${contractError.message}`);
 
-  for (const r of RULES) {
-    const { error } = await supa.from('family_rules').upsert(
-      { family_id: familyId, emoji: r.emoji, text: r.text, sort_order: r.sort_order, active: true },
-      { onConflict: 'family_id,sort_order' }
-    );
-    if (error) throw new Error(`Upsert family_rule "${r.text}": ${error.message}`);
-    console.log(`  • ${r.emoji} ${r.text}`);
+  if (activeContract) {
+    console.log(`  (omitido: la familia tiene el contrato v${activeContract.version} activo; las reglas se editan desde el contrato)`);
+  } else {
+    // Mismas reglas que los chips "Ideas para empezar" del editor de contrato.
+    const RULES = EXAMPLE_RULES.map((r, i) => ({ ...r, sort_order: i }));
+
+    for (const r of RULES) {
+      const { error } = await supa.from('family_rules').upsert(
+        { family_id: familyId, emoji: r.emoji, text: r.text, sort_order: r.sort_order, active: true },
+        { onConflict: 'family_id,sort_order' }
+      );
+      if (error) throw new Error(`Upsert family_rule "${r.text}": ${error.message}`);
+      console.log(`  • ${r.emoji} ${r.text}`);
+    }
   }
 
   // ── 6. wellness_resources ──────────────────────────────────────────────────
