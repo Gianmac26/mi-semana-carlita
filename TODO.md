@@ -34,7 +34,10 @@
 
 ## Deuda técnica — Lint
 
-- [ ] Lint: 20 errores preexistentes (comillas sin escapar, setState en efecto en ThemeToggle, react-hooks/immutability). No bloquean el build. Limpiar en un bloque dedicado.
+- [ ] Lint: 4 errores preexistentes (eran 20; 16 se fueron al borrar ArticlesTab.tsx). No bloquean el build. Limpiar en un bloque dedicado:
+      - `components/HelpButton.tsx:114` — react-hooks/immutability ("Cannot access variable before it is declared", en el handler que hace setRunning(true)).
+      - `components/HelpButton.tsx:175` (×2) — react/no-unescaped-entities (comillas `"` sin escapar en JSX).
+      - `components/ThemeToggle.tsx:52` — react-hooks/set-state-in-effect (setMode al leer localStorage dentro del efecto).
 
 ## Limpieza de features específicas de Carlita (post Módulo 0A)
 

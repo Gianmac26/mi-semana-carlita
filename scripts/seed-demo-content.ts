@@ -1,6 +1,6 @@
 // scripts/seed-demo-content.ts
 // Paso 2 de 2 del seed demo.
-// Crea: tareas (8), eventos (3), mi_mundo_entries (8), global_resources (3),
+// Crea: tareas (8), eventos (3), mi_mundo_entries (8), global_resources (6, de wellness-articles.ts),
 //       family_rules (6, de EXAMPLE_RULES), wellness_resources (8).
 // Prerrequisito: seed-demo-users.ts ya corrido (familia + profiles en DB)
 //                y migración 005_wellness_resources.sql aplicada.
@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
 import { getMondayOfWeek, formatWeekKey } from '../lib/utils';
 import { EXAMPLE_RULES } from '../lib/contract';
+import { ARTICLES, articlePublishedAt } from './wellness-articles';
 
 // Carga .env.local sin dotenv
 // NOTA: no maneja comillas con contenido interno. Suficiente para el demo.
@@ -70,51 +71,6 @@ const MI_MUNDO: { tag: string; key: string; value: string }[] = [
   { tag: 'hijo2.demo', key: 'sueno',    value: 'Quiero ser programador o astronauta'                       },
   { tag: 'hijo2.demo', key: 'logro',    value: 'Salí campeón del torneo de ajedrez del colegio'            },
   { tag: 'hijo2.demo', key: 'miedo',    value: 'Me dan miedo las tormentas eléctricas'                     },
-];
-
-const RESOURCES = [
-  {
-    slug:          'cuarto-y-animo',
-    emoji:         '🧹',
-    category:      'bienestar' as const,
-    title:         'Tu cuarto y tu estado de ánimo',
-    summary:       'El orden de tu espacio afecta cómo te sientes y cuánto rindes.',
-    body_markdown: md(
-      '## Tu cuarto y tu estado de ánimo',
-      '',
-      'Cuando tu cuarto está ordenado, tu mente también lo está. El desorden visual consume energía mental sin que te des cuenta.',
-      '',
-      '**Prueba esto:** dedica 10 minutos al día a ordenar antes de estudiar. Notarás la diferencia.'
-    ),
-  },
-  {
-    slug:          'estudiar-poco-poco',
-    emoji:         '📖',
-    category:      'estudio' as const,
-    title:         'Por qué estudiar poco a poco funciona',
-    summary:       'El cerebro retiene más con sesiones cortas y frecuentes que con una sola larga.',
-    body_markdown: md(
-      '## Por qué estudiar poco a poco funciona mejor',
-      '',
-      'Estudiar 30 minutos al día es más efectivo que 3 horas el día antes del examen. Esto se llama **práctica distribuida** y tiene respaldo científico.',
-      '',
-      '**Cómo aplicarlo:** divide el material en partes pequeñas y trabaja una cada día.'
-    ),
-  },
-  {
-    slug:          'el-poder-del-abrazo',
-    emoji:         '🤗',
-    category:      'valores' as const,
-    title:         'El poder del abrazo familiar',
-    summary:       'El contacto físico con tu familia reduce el estrés y fortalece los lazos.',
-    body_markdown: md(
-      '## El poder del abrazo familiar',
-      '',
-      'Un abrazo de 20 segundos libera oxitocina, la hormona del bienestar. No importa la edad: todos necesitamos sentir cercanía.',
-      '',
-      'Las familias que expresan afecto físico tienen hijos con mayor autoestima y menor ansiedad.'
-    ),
-  },
 ];
 
 async function main() {
@@ -209,12 +165,14 @@ async function main() {
 
   // ── 4. global_resources ─────────────────────────────────────────────────────
 
+  // Artículos completos de "Para leer" (misma fuente que seed-wellness-articles.ts).
   console.log('\n── 4. global_resources');
-  for (const r of RESOURCES) {
+  const publishedBase = Date.now();
+  for (const [i, r] of ARTICLES.entries()) {
     const { error } = await supa.from('global_resources').upsert(
       { slug: r.slug, title: r.title, summary: r.summary, body_markdown: r.body_markdown,
         category: r.category, emoji: r.emoji, active: true,
-        published_at: new Date().toISOString(), created_by: ids['admin.demo'] },
+        published_at: articlePublishedAt(i, publishedBase), created_by: ids['admin.demo'] },
       { onConflict: 'slug' }
     );
     if (error) throw new Error(`Upsert resource ${r.slug}: ${error.message}`);
